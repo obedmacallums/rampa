@@ -148,12 +148,12 @@ is independently implementable and testable.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T047 [P] Verify multi-arch builds (`docker buildx build --platform linux/arm64,linux/amd64`) for both Dockerfiles in `infra/`
+- [x] T047 [P] Verify multi-arch builds (`docker buildx build --platform linux/arm64,linux/amd64`) for both Dockerfiles in `infra/` (2026-07-19: both images export arm64+amd64 manifest lists; the amd64 `mamba create` can flake transiently under QEMU on a cold cache — retry succeeds)
 - [x] T048 [P] i18n sweep: no hardcoded user-visible strings outside `frontend/src/i18n/`; Spanish default locale verified
 - [x] T049 [P] Structured logging for pipeline stages (run_id, survey_id, stage, duration) in `backend/pipeline/` and `backend/apps/surveys/tasks.py`
 - [ ] T050 Performance validation: 10 GB LAZ ≤ 60 min (SC-005) and 3D first-render < 5 s (SC-006); tune PDAL stream chunk size / untwine parallelism if missed
 - [x] T051 [P] Update `README.md` with quickstart pointer and dev setup for this feature
-- [ ] T052 Run full quickstart.md validation (Scenarios 1–5 + automated checks) and record results in `specs/001-survey-ingest/quickstart.md` notes
+- [x] T052 Run full quickstart.md validation (Scenarios 1–5 + automated checks) and record results in `specs/001-survey-ingest/quickstart.md` notes (2026-07-19: automated green; Scenario 4 manual + 10 GB timing blocked pending a multi-GB sample — see quickstart Validation notes)
 
 ---
 

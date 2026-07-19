@@ -99,3 +99,34 @@ cd frontend && npm test
 Expected: all green; the `real_laz` marker test performs upload → pipeline →
 artifact assertions (existence, CRS = project CRS, checksums stable across a
 re-run into a new processing run).
+
+## Validation notes — 2026-07-19 (T052)
+
+Environment: macOS arm64 host, full docker compose stack, demo user.
+
+**Automated checks**: backend `pytest` 26 passed / 1 skipped (the `real_laz`
+test skips — no real drone LAZ sample available on this host); frontend
+`npm test` 14 passed.
+
+- **Scenario 1 — PASS (small sample)**: "Vuelo demo" survey processed end-to-end;
+  2D hillshade renders over the site and the 3D COPC view renders navigable
+  points (verified in Chrome; required the laz-perf wasm bundling fix, commit
+  `21774a2`). `GET /surveys/{id}/artifacts` returns `dem` (0.20 m), `copc` and
+  `hillshade` with sha256 + sizes + presigned/tile URLs. The 10 GB ≤ 60 min
+  timing (SC-005) remains unmeasured — no multi-GB sample on hand.
+- **Scenario 2 — PASS (by design + tests)**: stage state is server-side
+  (ProcessingRun rows); polling shape covered by
+  `test_api_status_retry.py`. Not re-run manually this session.
+- **Scenario 3 — PASS (partial manual)**: a real no-CRS upload (`nube.las`)
+  ends `failed` with the Spanish cause + corrective action and a retry button
+  in the UI; all four failure codes and the retry/new-run flow covered by
+  `test_failure_codes.py` and `test_api_status_retry.py`.
+- **Scenario 4 — BLOCKED (manual)**: needs a multi-GB upload plus a mid-flight
+  network kill; pending-upload listing/expiry covered by
+  `test_api_uploads_resume.py`, and the pending-uploads panel renders in the UI.
+- **Scenario 5 — PASS (by tests)**: `test_coexistence.py` asserts independent
+  runs/artifacts, capture-date ordering and byte-identical sha256 after a
+  second survey completes. Not re-run manually.
+
+Doc drift noted: T033/plan mention Potree; the shipped 3D viewer streams COPC
+with copc.js + three.js instead (see commit `3e6e267`).
