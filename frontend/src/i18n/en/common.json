@@ -55,7 +55,16 @@
   "viewer": {
     "loading_3d": "Loading point cloud…",
     "error_3d": "The 3D view could not be loaded. Retry or download the COPC file.",
-    "not_ready": "Results are not available yet."
+    "not_ready": "Results are not available yet.",
+    "basemap_label": "Basemap",
+    "basemap_none": "No basemap",
+    "basemap_map": "Map",
+    "basemap_satellite": "Satellite",
+    "basemap_hybrid": "Hybrid",
+    "layer_label": "Survey layer",
+    "layer_relief": "Relief",
+    "layer_elevation": "Elevation",
+    "layer_elevation_relief": "Elevation + relief"
   },
   "members": {
     "title": "Project members",

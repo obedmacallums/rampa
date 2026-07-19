@@ -55,7 +55,16 @@
   "viewer": {
     "loading_3d": "Cargando nube de puntos…",
     "error_3d": "No fue posible cargar la vista 3D. Reintenta o descarga el archivo COPC.",
-    "not_ready": "Los resultados aún no están disponibles."
+    "not_ready": "Los resultados aún no están disponibles.",
+    "basemap_label": "Mapa base",
+    "basemap_none": "Sin fondo",
+    "basemap_map": "Mapa",
+    "basemap_satellite": "Satélite",
+    "basemap_hybrid": "Híbrido",
+    "layer_label": "Capa del levantamiento",
+    "layer_relief": "Relieve",
+    "layer_elevation": "Elevación",
+    "layer_elevation_relief": "Elevación + relieve"
   },
   "members": {
     "title": "Miembros del proyecto",

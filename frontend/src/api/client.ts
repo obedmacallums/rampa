@@ -74,7 +74,14 @@ export interface ProjectMember {
 
 export interface ArtifactSet {
   run_id: string;
-  dem: { url: string; sha256: string; size_bytes: number; resolution_m: string };
+  dem: {
+    url: string;
+    tilejson_url: string;
+    statistics_url: string;
+    sha256: string;
+    size_bytes: number;
+    resolution_m: string;
+  };
   copc: { url: string; sha256: string; size_bytes: number };
   hillshade: {
     tile_url_template: string;

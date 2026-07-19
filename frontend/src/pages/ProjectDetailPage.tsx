@@ -96,7 +96,13 @@ export default function ProjectDetailPage() {
 
       <ProjectMembers projectId={projectId} />
 
-      {viewer === "2d" && artifacts && <Map2D tilejsonUrl={artifacts.hillshade.tilejson_url} />}
+      {viewer === "2d" && artifacts && (
+        <Map2D
+          tilejsonUrl={artifacts.hillshade.tilejson_url}
+          demTilejsonUrl={artifacts.dem.tilejson_url}
+          demStatisticsUrl={artifacts.dem.statistics_url}
+        />
+      )}
       {viewer === "3d" && artifacts && (
         <Cloud3D
           copcUrl={artifacts.copc.url}

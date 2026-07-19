@@ -58,12 +58,21 @@ class SurveyArtifactsView(APIView):
         # titiler fetches the COG itself, so its URL is signed for the internal
         # endpoint; browser-facing URLs are signed for the public one (R10).
         hillshade_internal = storage.presign_get(hillshade.storage_key, public=False)
+        dem_internal = storage.presign_get(dem.storage_key, public=False)
         expires_in = settings.PRESIGN_EXPIRY_SECONDS
         return Response(
             {
                 "run_id": str(run.id),
                 "dem": {
                     "url": storage.presign_get(dem.storage_key),
+                    "tilejson_url": (
+                        f"{settings.TITILER_PUBLIC_URL}/cog/WebMercatorQuad/tilejson.json?url="
+                        + _urlquote(dem_internal)
+                    ),
+                    "statistics_url": (
+                        f"{settings.TITILER_PUBLIC_URL}/cog/statistics?url="
+                        + _urlquote(dem_internal)
+                    ),
                     "sha256": dem.sha256,
                     "size_bytes": dem.size_bytes,
                     "resolution_m": str(dem.resolution_m),
