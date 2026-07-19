@@ -26,7 +26,12 @@ class TusdHookView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        if request.headers.get("X-Rampa-Hook-Secret") != settings.TUSD_HOOK_SECRET:
+        # tusd cannot attach static headers, so the shared secret travels in the
+        # hook URL query string (server-side config only, never client-visible).
+        provided = request.query_params.get("secret") or request.headers.get(
+            "X-Rampa-Hook-Secret"
+        )
+        if provided != settings.TUSD_HOOK_SECRET:
             raise ApiError("forbidden", status_code=403)
 
         payload = request.data or {}

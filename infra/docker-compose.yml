@@ -20,7 +20,9 @@ x-backend-env: &backend-env
 
 services:
   db:
-    image: postgis/postgis:16-3.4-alpine
+    # multi-arch community build referenced by postgis-docker's README;
+    # the official postgis/postgis images ship no linux/arm64 manifest
+    image: imresamu/postgis:16-3.4-alpine
     environment:
       POSTGRES_DB: rampa
       POSTGRES_USER: rampa
@@ -73,9 +75,8 @@ services:
       -s3-bucket rampa
       -s3-object-prefix tus-staging/
       -s3-endpoint http://minio:9000
-      -hooks-http http://backend:8000/api/v1/hooks/tusd
+      "-hooks-http=http://backend:8000/api/v1/hooks/tusd?secret=dev-hook-secret"
       -hooks-enabled-events post-create,post-finish
-      -hooks-http-forward-headers X-Rampa-Hook-Secret
     environment:
       AWS_ACCESS_KEY_ID: rampa
       AWS_SECRET_ACCESS_KEY: rampasecret
@@ -84,7 +85,9 @@ services:
       - "1080:1080"
 
   titiler:
-    image: ghcr.io/developmentseed/titiler:0.19.2
+    # pinned by digest: only recent multi-arch (arm64) builds are published
+    # under "latest"; versioned tags up to 0.24.0 are amd64-only
+    image: ghcr.io/developmentseed/titiler@sha256:d66f1525e9cad32b7be8e3b0cc1d3d6884a70f0a48ffede88dbccd18c199d357
     environment:
       # allow COG fetches from minio presigned URLs
       GDAL_DISABLE_READDIR_ON_OPEN: EMPTY_DIR

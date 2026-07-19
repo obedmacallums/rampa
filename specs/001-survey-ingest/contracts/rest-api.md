@@ -35,7 +35,9 @@ ProjectSummary = { "id", "name", "crs": {"code", "label_key"}, "survey_count", "
 
 Upload flow: (1) initiate against the backend → receive tus endpoint + metadata;
 (2) browser talks tus protocol directly to tusd (resumable, FR-003); (3) tusd
-completion hook (server-to-server, `POST /hooks/tusd`, shared-secret header)
+completion hook (server-to-server, `POST /hooks/tusd`; shared secret in the
+hook-URL query string — tusd cannot attach static headers, and the URL lives
+only in server-side configuration)
 creates the `Survey` and enqueues run #1. The hook performs **no file
 operations**: relocating the object to the canonical `source/` key happens
 asynchronously as the first pipeline step (constitution Principle III — no sync

@@ -2,9 +2,12 @@
 # conda-forge provides PDAL, untwine and GDAL binaries for both architectures.
 FROM condaforge/miniforge3:24.9.2-0
 
-RUN conda install -y -c conda-forge \
+# Separate env: installing python into conda's base env corrupts conda's own
+# plugin loading (sqlite symbol mismatch), so base stays untouched.
+RUN mamba create -y -n app -c conda-forge \
         python=3.12 pdal untwine gdal \
-    && conda clean -afy
+    && mamba clean -afy
+ENV PATH=/opt/conda/envs/app/bin:$PATH
 
 WORKDIR /app
 
