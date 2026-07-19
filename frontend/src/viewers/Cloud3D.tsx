@@ -1,48 +1,106 @@
-// 3D viewer: streams the COPC octree via HTTP range requests (copc.js) and
-// renders with three.js. Progressive detail: octree nodes load coarse-to-fine
-// (by depth) and appear as they arrive, up to a point budget. When the
-// presigned URL expires mid-session, the parent re-fetches the ArtifactSet
-// (onUrlExpired) and remounts with a fresh URL.
-import { Copc, Getter, Hierarchy } from "copc";
-import { createLazPerf, type LazPerf } from "laz-perf";
-import lazPerfWasmUrl from "laz-perf/lib/web/laz-perf.wasm?url";
+// 3D viewer: Potree 1.8.2 (static assets under /potree) streams the COPC
+// octree via HTTP range requests with camera-driven progressive LOD. The
+// presigned URL is probed before loading so an expired link triggers
+// onUrlExpired and the parent can remount with a fresh ArtifactSet.
+//
+// Potree ships as classic scripts (global namespace), not an npm module, so
+// its build and support libraries are served from public/potree and loaded
+// on first use. Potree.Viewer has no dispose API; a single viewer instance is
+// created once and re-parented across mounts instead of recreated.
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-
-const POINT_BUDGET = 4_000_000;
-
-// laz-perf resolves its .wasm relative to the current page URL, which under the
-// SPA router returns index.html; point it at the Vite-bundled asset instead.
-let lazPerfPromise: Promise<LazPerf> | undefined;
-function getLazPerf(): Promise<LazPerf> {
-  return (lazPerfPromise ??= createLazPerf({
-    locateFile: (file: string) => (file.endsWith(".wasm") ? lazPerfWasmUrl : file),
-  }));
-}
 
 interface Props {
   copcUrl: string;
   onUrlExpired?: () => void;
 }
 
-function makeGetter(url: string): Getter {
-  return async (begin, end) => {
-    const response = await fetch(url, {
-      headers: { Range: `bytes=${begin}-${end - 1}` },
-    });
-    if (!response.ok) {
-      throw Object.assign(new Error(`range fetch failed: ${response.status}`), {
-        status: response.status,
-      });
-    }
-    return new Uint8Array(await response.arrayBuffer());
-  };
+interface PotreePointCloud {
+  material: { size: number; pointSizeType: number };
 }
 
+interface PotreeViewer {
+  setEDLEnabled(enabled: boolean): void;
+  setFOV(fov: number): void;
+  setPointBudget(budget: number): void;
+  setLanguage(lang: string): void;
+  loadGUI(callback?: () => void): void;
+  scene: { addPointCloud(pointcloud: PotreePointCloud): void };
+  fitToScreen(factor?: number): void;
+}
+
+interface PotreeGlobal {
+  Viewer: new (element: HTMLElement) => PotreeViewer;
+  PointSizeType: { ADAPTIVE: number };
+  loadPointCloud(
+    path: string,
+    name: string,
+    callback: (event: { pointcloud: PotreePointCloud }) => void,
+  ): void;
+}
+
+const POINT_BUDGET = 2_000_000;
+
+const POTREE_STYLES = [
+  "/potree/build/potree/potree.css",
+  "/potree/libs/jquery-ui/jquery-ui.min.css",
+  "/potree/libs/openlayers3/ol.css",
+  "/potree/libs/spectrum/spectrum.css",
+  "/potree/libs/jstree/themes/mixed/style.css",
+];
+
+// Order matters: Potree expects these globals; laslaz loads after potree.js,
+// mirroring the upstream examples.
+const POTREE_SCRIPTS = [
+  "/potree/libs/jquery/jquery-3.1.1.min.js",
+  "/potree/libs/spectrum/spectrum.js",
+  "/potree/libs/jquery-ui/jquery-ui.min.js",
+  "/potree/libs/other/BinaryHeap.js",
+  "/potree/libs/tween/tween.min.js",
+  "/potree/libs/d3/d3.js",
+  "/potree/libs/proj4/proj4.js",
+  "/potree/libs/openlayers3/ol.js",
+  "/potree/libs/i18next/i18next.js",
+  "/potree/libs/jstree/jstree.js",
+  "/potree/libs/copc/index.js",
+  "/potree/build/potree/potree.js",
+  "/potree/libs/plasio/js/laslaz.js",
+];
+
+let assetsPromise: Promise<void> | undefined;
+
+function loadStyle(href: string): void {
+  if (document.querySelector(`link[href="${href}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
+}
+
+function loadScript(src: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function ensurePotreeAssets(): Promise<void> {
+  return (assetsPromise ??= (async () => {
+    POTREE_STYLES.forEach(loadStyle);
+    for (const src of POTREE_SCRIPTS) await loadScript(src);
+  })());
+}
+
+// Singleton viewer, re-parented across mounts (Potree has no dispose API).
+let shared:
+  | { host: HTMLDivElement; viewer: PotreeViewer; loadedObject?: string }
+  | undefined;
+
 export default function Cloud3D({ copcUrl, onUrlExpired }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const container = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
 
@@ -50,90 +108,62 @@ export default function Cloud3D({ copcUrl, onUrlExpired }: Props) {
     const el = container.current;
     if (!el) return;
     let disposed = false;
-    let frame = 0;
-
-    const width = el.clientWidth || 800;
-    const height = 480;
-    const renderer = new THREE.WebGLRenderer({ antialias: false });
-    renderer.setSize(width, height);
-    el.appendChild(renderer.domElement);
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1a22);
-    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100_000);
-    const controls = new OrbitControls(camera, renderer.domElement);
-
-    const animate = () => {
-      frame = requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    };
 
     void (async () => {
       try {
-        const getter = makeGetter(copcUrl);
-        const lazPerf = await getLazPerf();
-        const copc = await Copc.create(getter);
-        const cube = copc.info.cube;
-        const center = new THREE.Vector3(
-          (cube[0] + cube[3]) / 2,
-          (cube[1] + cube[4]) / 2,
-          (cube[2] + cube[5]) / 2,
-        );
-        const size = Math.max(cube[3] - cube[0], cube[4] - cube[1]);
-        const zMin = copc.header.min[2];
-        const zMax = copc.header.max[2];
+        // Probe the presigned URL before handing it to Potree: an expired
+        // link should surface as a refresh, not a broken scene.
+        const probe = await fetch(copcUrl, { headers: { Range: "bytes=0-0" } });
+        if (!probe.ok) {
+          throw Object.assign(new Error(`copc probe failed: ${probe.status}`), {
+            status: probe.status,
+          });
+        }
+        await ensurePotreeAssets();
+        if (disposed) return;
 
-        camera.up.set(0, 0, 1); // z-up: geospatial convention
-        camera.position.set(0, -size * 0.9, size * 0.6);
-        controls.target.set(0, 0, 0);
-        animate();
-
-        // Collect the hierarchy (root page + any nested pages).
-        let nodes: Hierarchy.Node.Map = {};
-        let pending: Hierarchy.Page[] = [copc.info.rootHierarchyPage];
-        while (pending.length > 0) {
-          const page = pending.shift()!;
-          const loaded = await Copc.loadHierarchyPage(getter, page);
-          nodes = { ...nodes, ...loaded.nodes };
-          pending = pending.concat(
-            Object.values(loaded.pages).filter((p): p is Hierarchy.Page => p !== undefined),
-          );
+        const Potree = (window as unknown as { Potree: PotreeGlobal }).Potree;
+        if (!shared) {
+          const host = document.createElement("div");
+          host.className = "potree_container";
+          host.style.cssText =
+            "position:relative;width:100%;height:75vh;min-height:480px";
+          const renderArea = document.createElement("div");
+          renderArea.id = "potree_render_area";
+          renderArea.style.cssText = "position:absolute;inset:0";
+          const sidebar = document.createElement("div");
+          sidebar.id = "potree_sidebar_container";
+          host.appendChild(renderArea);
+          host.appendChild(sidebar);
+          el.appendChild(host);
+          const viewer = new Potree.Viewer(renderArea);
+          viewer.setEDLEnabled(true);
+          viewer.setFOV(60);
+          viewer.setPointBudget(POINT_BUDGET);
+          viewer.loadGUI(() => {
+            viewer.setLanguage(i18n.language.startsWith("es") ? "es" : "en");
+          });
+          shared = { host, viewer };
+        } else {
+          el.appendChild(shared.host);
         }
 
-        // Coarse-to-fine: depth order gives progressive detail as nodes land.
-        const keys = Object.keys(nodes).sort(
-          (a, b) => parseInt(a.split("-")[0]) - parseInt(b.split("-")[0]),
-        );
-        let budget = POINT_BUDGET;
-        for (const key of keys) {
-          if (disposed || budget <= 0) break;
-          const node = nodes[key];
-          if (!node || node.pointCount === 0 || node.pointCount > budget) continue;
-          const view = await Copc.loadPointDataView(getter, copc, node, { lazPerf });
-          const [gx, gy, gz] = ["X", "Y", "Z"].map((d) => view.getter(d));
-          const positions = new Float32Array(view.pointCount * 3);
-          const colors = new Float32Array(view.pointCount * 3);
-          const color = new THREE.Color();
-          for (let i = 0; i < view.pointCount; i++) {
-            positions[i * 3] = gx(i) - center.x;
-            positions[i * 3 + 1] = gy(i) - center.y;
-            positions[i * 3 + 2] = gz(i) - center.z;
-            const tz = zMax > zMin ? (gz(i) - zMin) / (zMax - zMin) : 0.5;
-            color.setHSL(0.66 - 0.66 * tz, 0.85, 0.35 + 0.3 * tz); // blue→red by elevation
-            colors[i * 3] = color.r;
-            colors[i * 3 + 1] = color.g;
-            colors[i * 3 + 2] = color.b;
-          }
-          if (disposed) break;
-          const geometry = new THREE.BufferGeometry();
-          geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-          geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-          const material = new THREE.PointsMaterial({ size: 0.6, vertexColors: true });
-          scene.add(new THREE.Points(geometry, material));
-          budget -= view.pointCount;
+        // Same object under a refreshed signature needs no reload.
+        const objectKey = copcUrl.split("?")[0];
+        if (shared.loadedObject === objectKey) {
           setState("ready");
+          return;
         }
-        if (!disposed) setState("ready");
+        const current = shared;
+        Potree.loadPointCloud(copcUrl, "survey", (event) => {
+          if (disposed) return;
+          current.viewer.scene.addPointCloud(event.pointcloud);
+          event.pointcloud.material.size = 1;
+          event.pointcloud.material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+          current.viewer.fitToScreen(0.5);
+          current.loadedObject = objectKey;
+          setState("ready");
+        });
       } catch (error) {
         if (disposed) return;
         console.error("Cloud3D load failed:", error);
@@ -144,16 +174,7 @@ export default function Cloud3D({ copcUrl, onUrlExpired }: Props) {
 
     return () => {
       disposed = true;
-      cancelAnimationFrame(frame);
-      controls.dispose();
-      scene.traverse((obj) => {
-        if (obj instanceof THREE.Points) {
-          obj.geometry.dispose();
-          (obj.material as THREE.Material).dispose();
-        }
-      });
-      renderer.dispose();
-      el.removeChild(renderer.domElement);
+      if (shared && shared.host.parentElement === el) el.removeChild(shared.host);
     };
   }, [copcUrl, onUrlExpired]);
 

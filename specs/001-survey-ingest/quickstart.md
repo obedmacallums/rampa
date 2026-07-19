@@ -128,5 +128,10 @@ test skips — no real drone LAZ sample available on this host); frontend
   runs/artifacts, capture-date ordering and byte-identical sha256 after a
   second survey completes. Not re-run manually.
 
-Doc drift noted: T033/plan mention Potree; the shipped 3D viewer streams COPC
-with copc.js + three.js instead (see commit `3e6e267`).
+Doc drift noted: T033/plan mention Potree; the shipped 3D viewer streamed COPC
+with copc.js + three.js instead (see commit `3e6e267`). **Resolved
+2026-07-19**: the 3D viewer now uses Potree 1.8.2 (vendored under
+`frontend/public/potree/`, COPC supported natively since 1.8.2) with
+camera-driven progressive LOD, EDL and the measurement/profile sidebar, as
+T033 planned. Rendering, sidebar tools and Spanish UI verified manually in
+Chrome against the demo flight.
