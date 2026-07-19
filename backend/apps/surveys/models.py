@@ -18,7 +18,9 @@ class UploadSession(models.Model):
         EXPIRED = "expired"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    tus_upload_id = models.CharField(max_length=128, unique=True, null=True, blank=True)
+    # tusd S3-store IDs embed the base64 multipart upload id and easily exceed
+    # 128 chars
+    tus_upload_id = models.CharField(max_length=512, unique=True, null=True, blank=True)
     project = models.ForeignKey(
         "projects.Project", on_delete=models.CASCADE, related_name="upload_sessions"
     )
