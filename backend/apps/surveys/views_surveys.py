@@ -1,12 +1,11 @@
 """Survey listing, status polling, retry, and artifact delivery (contracts)."""
 
 from django.conf import settings
-from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.common.errors import ApiError
-from apps.projects.models import Project
+from apps.projects import access
 from pipeline import storage
 
 from .models import DerivedArtifact, ProcessingRun, Survey
@@ -16,20 +15,22 @@ from .tasks import enqueue_run
 
 class ProjectSurveysView(APIView):
     def get(self, request, project_id):
-        project = get_object_or_404(Project, id=project_id)
+        project = access.get_project_or_404(request.user, project_id)
         surveys = project.surveys.prefetch_related("runs").order_by("capture_date", "created_at")
         return Response(SurveySummarySerializer(surveys, many=True).data)
 
 
 class SurveyDetailView(APIView):
     def get(self, request, survey_id):
-        survey = get_object_or_404(Survey.objects.prefetch_related("runs"), id=survey_id)
+        survey = access.get_survey_or_404(
+            request.user, survey_id, queryset=Survey.objects.prefetch_related("runs")
+        )
         return Response(SurveyDetailSerializer(survey).data)
 
 
 class SurveyRetryView(APIView):
     def post(self, request, survey_id):
-        survey = get_object_or_404(Survey, id=survey_id)
+        survey = access.get_survey_or_404(request.user, survey_id)
         if survey.status != Survey.Status.FAILED:
             raise ApiError("not_retriable", status_code=409)
         run = enqueue_run(survey)  # new run, source re-used — no re-upload (FR-012)
@@ -38,7 +39,7 @@ class SurveyRetryView(APIView):
 
 class SurveyArtifactsView(APIView):
     def get(self, request, survey_id):
-        survey = get_object_or_404(Survey, id=survey_id)
+        survey = access.get_survey_or_404(request.user, survey_id)
         run = (
             ProcessingRun.objects.filter(survey=survey, state=ProcessingRun.State.COMPLETED)
             .order_by("-number")

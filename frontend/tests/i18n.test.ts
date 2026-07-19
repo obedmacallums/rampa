@@ -16,6 +16,11 @@ const API_CODES = [
   "not_authenticated",
   "not_ready",
   "not_retriable",
+  "user_not_found",
+  "already_member",
+  "last_owner",
+  "not_owner",
+  "invalid_role",
 ];
 
 describe("error catalogs", () => {

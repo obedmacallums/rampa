@@ -69,9 +69,13 @@ def crs_entry(db):
 
 @pytest.fixture
 def project(db, user, crs_entry):
-    from apps.projects.models import Project
+    from apps.projects.models import Project, ProjectMembership
 
-    return Project.objects.create(name="Rajo Norte", crs=crs_entry, created_by=user)
+    project = Project.objects.create(name="Rajo Norte", crs=crs_entry, created_by=user)
+    ProjectMembership.objects.create(
+        project=project, user=user, role=ProjectMembership.Role.OWNER, granted_by=user
+    )
+    return project
 
 
 @pytest.fixture

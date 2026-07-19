@@ -4,12 +4,11 @@ import datetime
 import urllib.request
 
 from django.conf import settings
-from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.common.errors import ApiError
-from apps.projects.models import Project
+from apps.projects import access
 
 from .models import UploadSession
 from .serializers import UploadSessionSerializer
@@ -31,7 +30,7 @@ def _tus_offset(tus_upload_id: str) -> int | None:
 
 class ProjectUploadsView(APIView):
     def post(self, request, project_id):
-        project = get_object_or_404(Project, id=project_id)
+        project = access.get_project_or_404(request.user, project_id)
         filename = (request.data.get("filename") or "").strip()
         size = request.data.get("size_bytes")
         capture_date = request.data.get("capture_date")
@@ -71,7 +70,7 @@ class ProjectUploadsView(APIView):
         )
 
     def get(self, request, project_id):
-        project = get_object_or_404(Project, id=project_id)
+        project = access.get_project_or_404(request.user, project_id)
         sessions = project.upload_sessions.filter(state=UploadSession.State.ACTIVE).order_by(
             "-created_at"
         )

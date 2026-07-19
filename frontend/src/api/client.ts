@@ -63,6 +63,15 @@ export interface PendingUpload {
   declared_size_bytes: number;
 }
 
+export type MemberRole = "owner" | "member";
+
+export interface ProjectMember {
+  username: string;
+  role: MemberRole;
+  granted_by: string | null; // null = granted by the system (002 backfill)
+  granted_at: string;
+}
+
 export interface ArtifactSet {
   run_id: string;
   dem: { url: string; sha256: string; size_bytes: number; resolution_m: string };
@@ -137,6 +146,22 @@ export const api = {
     }),
   listPendingUploads: (projectId: string) =>
     request<PendingUpload[]>(`/projects/${projectId}/uploads`),
+
+  listMembers: (projectId: string) => request<ProjectMember[]>(`/projects/${projectId}/members`),
+  addMember: (projectId: string, username: string, role: MemberRole) =>
+    request<ProjectMember>(`/projects/${projectId}/members`, {
+      method: "POST",
+      body: JSON.stringify({ username, role }),
+    }),
+  updateMemberRole: (projectId: string, username: string, role: MemberRole) =>
+    request<ProjectMember>(`/projects/${projectId}/members/${encodeURIComponent(username)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    }),
+  removeMember: (projectId: string, username: string) =>
+    request<object>(`/projects/${projectId}/members/${encodeURIComponent(username)}`, {
+      method: "DELETE",
+    }),
 
   listSurveys: (projectId: string) => request<SurveySummary[]>(`/projects/${projectId}/surveys`),
   getSurvey: (surveyId: string) => request<SurveyDetail>(`/surveys/${surveyId}`),

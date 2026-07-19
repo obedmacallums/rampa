@@ -56,5 +56,16 @@
     "loading_3d": "Cargando nube de puntos…",
     "error_3d": "No fue posible cargar la vista 3D. Reintenta o descarga el archivo COPC.",
     "not_ready": "Los resultados aún no están disponibles."
+  },
+  "members": {
+    "title": "Miembros del proyecto",
+    "role_owner": "Propietario",
+    "role_member": "Miembro",
+    "granted_by_system": "sistema",
+    "add_label": "Agregar por nombre de usuario",
+    "remove_confirm": "¿Quitar a {{username}} del proyecto? Perderá todo acceso.",
+    "remove": "Quitar",
+    "grant_owner": "Hacer propietario",
+    "revoke_owner": "Quitar propiedad"
   }
 }

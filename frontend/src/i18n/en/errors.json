@@ -17,5 +17,10 @@
   "method_not_allowed": "Operation not allowed.",
   "not_ready": "Survey results are not ready yet.",
   "not_retriable": "Only a survey in failed state can be retried.",
-  "invalid_request": "The request is invalid."
+  "invalid_request": "The request is invalid.",
+  "user_not_found": "No user exists with that username. Check the exact spelling.",
+  "already_member": "That user is already a member of the project.",
+  "last_owner": "A project must always have at least one owner.",
+  "not_owner": "Only an owner can manage the project's members.",
+  "invalid_role": "The given role is not valid."
 }

@@ -56,5 +56,16 @@
     "loading_3d": "Loading point cloud…",
     "error_3d": "The 3D view could not be loaded. Retry or download the COPC file.",
     "not_ready": "Results are not available yet."
+  },
+  "members": {
+    "title": "Project members",
+    "role_owner": "Owner",
+    "role_member": "Member",
+    "granted_by_system": "system",
+    "add_label": "Add by username",
+    "remove_confirm": "Remove {{username}} from the project? They will lose all access.",
+    "remove": "Remove",
+    "grant_owner": "Make owner",
+    "revoke_owner": "Revoke ownership"
   }
 }

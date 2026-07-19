@@ -39,3 +39,42 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ProjectMembership(models.Model):
+    """User↔project association; the sole source of project visibility (002).
+
+    Authorization derives from these rows, never from ``Project.created_by``
+    (which stays as an audit field only). ``granted_by=NULL`` means "granted
+    by the system" (the 002 backfill migration).
+    """
+
+    class Role(models.TextChoices):
+        OWNER = "owner"
+        MEMBER = "member"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="memberships")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="project_memberships"
+    )
+    role = models.CharField(max_length=10, choices=Role.choices)
+    granted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    granted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["project", "user"], name="membership_unique")
+        ]
+        indexes = [
+            models.Index(fields=["user", "project"], name="membership_user_project_idx")
+        ]
+
+    def __str__(self):
+        return f"{self.user}:{self.project}:{self.role}"

@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 
 import { api, ApiError, ArtifactSet } from "../api/client";
 import PendingUploads from "../components/PendingUploads";
+import ProjectMembers from "../components/ProjectMembers";
 import SurveyStatus from "../components/SurveyStatus";
 import UploadWidget from "../components/UploadWidget";
 import { useSurveys } from "../stores/surveys";
@@ -92,6 +93,8 @@ export default function ProjectDetailPage() {
         </table>
       )}
       {viewerError && <p role="alert">{t(viewerError)}</p>}
+
+      <ProjectMembers projectId={projectId} />
 
       {viewer === "2d" && artifacts && <Map2D tilejsonUrl={artifacts.hillshade.tilejson_url} />}
       {viewer === "3d" && artifacts && (
