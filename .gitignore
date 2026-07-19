@@ -1,0 +1,75 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Django ---
+*.sqlite3
+staticfiles/
+mediafiles/
+
+# --- Node / React ---
+node_modules/
+.pnpm-store/
+.vite/
+.next/
+*.tsbuildinfo
+coverage/
+
+# Frontend build output (keep generic; adjust per app layout)
+frontend/dist/
+frontend/build/
+
+# --- Environment / secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Docker / local infra ---
+docker-compose.override.yml
+.minio/
+minio-data/
+pgdata/
+redis-data/
+
+# --- Geospatial data & derived artifacts (never commit site data) ---
+*.las
+*.laz
+*.e57
+*.copc.laz
+*.tif
+*.tiff
+*.vrt
+*.dxf
+*.obj
+*.ply
+*.glb
+*.b3dm
+data/
+uploads/
+artifacts/
+
+# Small synthetic test fixtures are allowed
+!tests/fixtures/**
+
+# --- Editors / OS ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# --- Claude Code local settings ---
+.claude/settings.local.json
