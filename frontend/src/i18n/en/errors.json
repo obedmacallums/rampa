@@ -1,0 +1,21 @@
+{
+  "unsupported_format": "The file is not a valid LAS/LAZ point cloud. Accepted formats: georeferenced LAS and LAZ. Export the flight in one of those formats and upload it again.",
+  "unreadable_file": "The file could not be read: it appears corrupt or incomplete. Re-export it from your photogrammetry software and upload it again.",
+  "missing_crs": "The file carries no coordinate system information. Export the file with its CRS included and upload it again.",
+  "internal_error": "An error occurred during processing. You can retry; if it persists, contact the platform operator.",
+  "file_too_large": "The file exceeds the 50 GB per-survey limit.",
+  "unsupported_extension": "Unsupported extension. Only .las and .laz files are accepted.",
+  "invalid_capture_date": "The capture date is invalid. Use the YYYY-MM-DD format.",
+  "invalid_size": "The declared file size is invalid.",
+  "invalid_name": "The provided name is invalid (120 characters max).",
+  "name_taken": "A project with that name already exists.",
+  "invalid_crs": "The selected coordinate system is invalid.",
+  "invalid_credentials": "Incorrect username or password.",
+  "not_authenticated": "You must sign in to continue.",
+  "forbidden": "You do not have permission to perform this action.",
+  "not_found": "The requested resource does not exist.",
+  "method_not_allowed": "Operation not allowed.",
+  "not_ready": "Survey results are not ready yet.",
+  "not_retriable": "Only a survey in failed state can be retried.",
+  "invalid_request": "The request is invalid."
+}

@@ -1,0 +1,21 @@
+{
+  "unsupported_format": "El archivo no es una nube de puntos LAS/LAZ válida. Formatos aceptados: LAS y LAZ georreferenciados. Exporta el vuelo en uno de esos formatos y vuelve a subirlo.",
+  "unreadable_file": "El archivo no se pudo leer: parece estar dañado o incompleto. Vuelve a exportarlo desde tu software de fotogrametría y súbelo nuevamente.",
+  "missing_crs": "El archivo no incluye información de sistema de coordenadas. Exporta el archivo con su sistema de coordenadas (CRS) incluido y vuelve a subirlo.",
+  "internal_error": "Ocurrió un error durante el procesamiento. Puedes reintentar; si persiste, contacta al operador de la plataforma.",
+  "file_too_large": "El archivo supera el límite de 50 GB por levantamiento.",
+  "unsupported_extension": "Extensión no soportada. Solo se aceptan archivos .las y .laz.",
+  "invalid_capture_date": "La fecha de captura no es válida. Usa el formato AAAA-MM-DD.",
+  "invalid_size": "El tamaño declarado del archivo no es válido.",
+  "invalid_name": "El nombre ingresado no es válido (máximo 120 caracteres).",
+  "name_taken": "Ya existe un proyecto con ese nombre.",
+  "invalid_crs": "El sistema de coordenadas seleccionado no es válido.",
+  "invalid_credentials": "Usuario o contraseña incorrectos.",
+  "not_authenticated": "Debes iniciar sesión para continuar.",
+  "forbidden": "No tienes permiso para realizar esta acción.",
+  "not_found": "El recurso solicitado no existe.",
+  "method_not_allowed": "Operación no permitida.",
+  "not_ready": "Los resultados del levantamiento aún no están listos.",
+  "not_retriable": "Solo se puede reintentar un levantamiento con estado fallido.",
+  "invalid_request": "La solicitud no es válida."
+}

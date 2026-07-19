@@ -1,0 +1,12 @@
+[
+  {
+    "model": "projects.crscatalogentry",
+    "pk": 1,
+    "fields": { "code": "EPSG:32718", "label_key": "crs.wgs84_utm_18s", "is_active": true }
+  },
+  {
+    "model": "projects.crscatalogentry",
+    "pk": 2,
+    "fields": { "code": "EPSG:32719", "label_key": "crs.wgs84_utm_19s", "is_active": true }
+  }
+]

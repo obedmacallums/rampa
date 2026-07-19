@@ -59,6 +59,23 @@ degradation prediction) — always under an assisted-detection, human-authority 
    point-cloud semantic segmentation, generative report drafting and query assistant,
    road degradation prediction.
 
+## Getting started
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+docker compose -f infra/docker-compose.yml exec backend \
+  python manage.py createuser demo --password demo1234
+# UI: http://localhost:8080 — MinIO console: http://localhost:9001
+```
+
+See [`specs/001-survey-ingest/quickstart.md`](specs/001-survey-ingest/quickstart.md)
+for end-to-end validation scenarios. For backend development without Docker:
+
+```bash
+cd backend && uv venv .venv --python 3.12 && uv pip install -e ".[dev]"
+.venv/bin/python -m pytest   # PDAL/untwine-dependent tests skip outside the image
+```
+
 ## Development workflow
 
 This project is spec-driven using [Spec Kit](https://github.com/github/spec-kit):

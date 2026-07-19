@@ -1,0 +1,139 @@
+name: rampa
+
+x-backend-env: &backend-env
+  DJANGO_SECRET_KEY: dev-only-secret
+  DJANGO_DEBUG: "1"
+  DJANGO_ALLOWED_HOSTS: "*"
+  POSTGRES_HOST: db
+  POSTGRES_DB: rampa
+  POSTGRES_USER: rampa
+  POSTGRES_PASSWORD: rampa
+  REDIS_URL: redis://redis:6379/0
+  S3_ENDPOINT: http://minio:9000
+  S3_PUBLIC_ENDPOINT: http://localhost:9000
+  S3_BUCKET: rampa
+  S3_ACCESS_KEY: rampa
+  S3_SECRET_KEY: rampasecret
+  TUS_PUBLIC_URL: http://localhost:1080/files/
+  TUSD_HOOK_SECRET: dev-hook-secret
+  TITILER_PUBLIC_URL: http://localhost:8081
+
+services:
+  db:
+    image: postgis/postgis:16-3.4-alpine
+    environment:
+      POSTGRES_DB: rampa
+      POSTGRES_USER: rampa
+      POSTGRES_PASSWORD: rampa
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rampa"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+
+  minio:
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: rampa
+      MINIO_ROOT_PASSWORD: rampasecret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio-init:
+    image: minio/mc:RELEASE.2024-11-21T17-21-54Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "/init/create-bucket.sh"]
+    volumes:
+      - ./minio-init:/init:ro
+
+  tusd:
+    image: tusproject/tusd:v2.6
+    depends_on:
+      minio:
+        condition: service_healthy
+    command: >
+      -port 1080
+      -behind-proxy
+      -s3-bucket rampa
+      -s3-object-prefix tus-staging/
+      -s3-endpoint http://minio:9000
+      -hooks-http http://backend:8000/api/v1/hooks/tusd
+      -hooks-enabled-events post-create,post-finish
+      -hooks-http-forward-headers X-Rampa-Hook-Secret
+    environment:
+      AWS_ACCESS_KEY_ID: rampa
+      AWS_SECRET_ACCESS_KEY: rampasecret
+      AWS_REGION: us-east-1
+    ports:
+      - "1080:1080"
+
+  titiler:
+    image: ghcr.io/developmentseed/titiler:0.19.2
+    environment:
+      # allow COG fetches from minio presigned URLs
+      GDAL_DISABLE_READDIR_ON_OPEN: EMPTY_DIR
+      GDAL_HTTP_MERGE_CONSECUTIVE_RANGES: "YES"
+    ports:
+      - "8081:8000"
+
+  backend:
+    build:
+      context: ..
+      dockerfile: infra/backend.Dockerfile
+    environment: *backend-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py loaddata crs_catalog &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120"
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/backend.Dockerfile
+    environment: *backend-env
+    depends_on:
+      backend:
+        condition: service_started
+    command: celery -A config worker -B --loglevel=info
+    volumes:
+      - worker-scratch:/scratch
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: infra/frontend.Dockerfile
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:
+  minio-data:
+  worker-scratch:

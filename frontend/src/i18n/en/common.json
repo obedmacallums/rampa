@@ -1,0 +1,60 @@
+{
+  "app": { "title": "Rampa — Mine Site Geometric Audit" },
+  "auth": {
+    "username": "Username",
+    "password": "Password",
+    "login": "Sign in",
+    "logout": "Sign out"
+  },
+  "projects": {
+    "title": "Projects",
+    "empty": "No projects yet. Create the first one to upload a survey.",
+    "create": "Create project",
+    "name": "Project name",
+    "crs": "Working coordinate system",
+    "surveys_count": "{{count}} surveys"
+  },
+  "crs": {
+    "wgs84_utm_18s": "WGS 84 / UTM zone 18S",
+    "wgs84_utm_19s": "WGS 84 / UTM zone 19S"
+  },
+  "surveys": {
+    "title": "Surveys",
+    "empty": "No surveys yet. Upload the first drone flight.",
+    "name": "Name",
+    "capture_date": "Capture date",
+    "size": "Size",
+    "status": "Status",
+    "view_2d": "2D map",
+    "view_3d": "3D view",
+    "retry": "Retry processing"
+  },
+  "status": {
+    "queued": "Queued",
+    "processing": "Processing",
+    "completed": "Completed",
+    "failed": "Failed"
+  },
+  "stage": {
+    "validation": "Validation",
+    "reprojection": "Reprojection",
+    "surface_generation": "Surface generation"
+  },
+  "upload": {
+    "title": "Upload survey",
+    "file": "Georeferenced LAS/LAZ file (up to 50 GB)",
+    "survey_name": "Survey name (optional)",
+    "capture_date": "Capture date",
+    "start": "Start upload",
+    "progress": "Uploading… {{percent}}%",
+    "done": "Upload complete; processing continues in the background. You may close the browser.",
+    "interrupted": "Upload interrupted. Select the same file again to resume where it left off.",
+    "pending_title": "Uploads pending resumption",
+    "pending_hint": "Select the same file again under \"Upload survey\" and the transfer will continue from the last confirmed point."
+  },
+  "viewer": {
+    "loading_3d": "Loading point cloud…",
+    "error_3d": "The 3D view could not be loaded. Retry or download the COPC file.",
+    "not_ready": "Results are not available yet."
+  }
+}

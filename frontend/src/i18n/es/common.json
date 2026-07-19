@@ -1,0 +1,60 @@
+{
+  "app": { "title": "Rampa — Auditoría Geométrica de Faenas" },
+  "auth": {
+    "username": "Usuario",
+    "password": "Contraseña",
+    "login": "Ingresar",
+    "logout": "Cerrar sesión"
+  },
+  "projects": {
+    "title": "Proyectos",
+    "empty": "Aún no hay proyectos. Crea el primero para subir un levantamiento.",
+    "create": "Crear proyecto",
+    "name": "Nombre del proyecto",
+    "crs": "Sistema de coordenadas de trabajo",
+    "surveys_count": "{{count}} levantamientos"
+  },
+  "crs": {
+    "wgs84_utm_18s": "WGS 84 / UTM huso 18S",
+    "wgs84_utm_19s": "WGS 84 / UTM huso 19S"
+  },
+  "surveys": {
+    "title": "Levantamientos",
+    "empty": "Sin levantamientos todavía. Sube el primer vuelo del dron.",
+    "name": "Nombre",
+    "capture_date": "Fecha de captura",
+    "size": "Tamaño",
+    "status": "Estado",
+    "view_2d": "Mapa 2D",
+    "view_3d": "Vista 3D",
+    "retry": "Reintentar procesamiento"
+  },
+  "status": {
+    "queued": "En cola",
+    "processing": "Procesando",
+    "completed": "Completado",
+    "failed": "Fallido"
+  },
+  "stage": {
+    "validation": "Validación",
+    "reprojection": "Reproyección",
+    "surface_generation": "Generación de superficies"
+  },
+  "upload": {
+    "title": "Subir levantamiento",
+    "file": "Archivo LAS/LAZ georreferenciado (hasta 50 GB)",
+    "survey_name": "Nombre del levantamiento (opcional)",
+    "capture_date": "Fecha de captura",
+    "start": "Iniciar subida",
+    "progress": "Subiendo… {{percent}}%",
+    "done": "Subida completa; el procesamiento continúa en segundo plano. Puedes cerrar el navegador.",
+    "interrupted": "Subida interrumpida. Vuelve a seleccionar el mismo archivo para retomar desde donde quedó.",
+    "pending_title": "Subidas pendientes de reanudar",
+    "pending_hint": "Selecciona nuevamente el mismo archivo en \"Subir levantamiento\" y la transferencia continuará desde el último punto confirmado."
+  },
+  "viewer": {
+    "loading_3d": "Cargando nube de puntos…",
+    "error_3d": "No fue posible cargar la vista 3D. Reintenta o descarga el archivo COPC.",
+    "not_ready": "Los resultados aún no están disponibles."
+  }
+}

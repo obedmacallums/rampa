@@ -1,0 +1,44 @@
+[project]
+name = "rampa-backend"
+version = "0.1.0"
+description = "Rampa backend: ingest pipelines, persistence, API"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=5.0,<6",
+    "djangorestframework>=3.15",
+    "celery[redis]>=5.3",
+    "boto3>=1.34",
+    "laspy[lazrs]>=2.5",
+    "pyproj>=3.6",
+    "gunicorn>=22",
+    "psycopg[binary]>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-django>=4.8",
+    "ruff>=0.4",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["config*", "apps*", "pipeline*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+testpaths = ["tests"]
+markers = [
+    "real_laz: end-to-end ingest test requiring a real LAZ sample (--laz-sample)",
+]
