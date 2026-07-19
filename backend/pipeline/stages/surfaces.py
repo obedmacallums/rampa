@@ -29,7 +29,10 @@ class SurfaceArtifact:
 
 
 def _run(cmd: list[str], step: str, stdin: bytes | None = None) -> None:
-    proc = subprocess.run(cmd, input=stdin, capture_output=True)
+    try:
+        proc = subprocess.run(cmd, input=stdin, capture_output=True)
+    except FileNotFoundError as exc:
+        raise StageError("internal_error", f"{step}: binary not found: {cmd[0]}") from exc
     if proc.returncode != 0:
         raise StageError("internal_error", f"{step} failed: {proc.stderr[-2000:]!r}")
 
