@@ -4,12 +4,23 @@
 // presigned URL expires mid-session, the parent re-fetches the ArtifactSet
 // (onUrlExpired) and remounts with a fresh URL.
 import { Copc, Getter, Hierarchy } from "copc";
+import { createLazPerf, type LazPerf } from "laz-perf";
+import lazPerfWasmUrl from "laz-perf/lib/web/laz-perf.wasm?url";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 const POINT_BUDGET = 4_000_000;
+
+// laz-perf resolves its .wasm relative to the current page URL, which under the
+// SPA router returns index.html; point it at the Vite-bundled asset instead.
+let lazPerfPromise: Promise<LazPerf> | undefined;
+function getLazPerf(): Promise<LazPerf> {
+  return (lazPerfPromise ??= createLazPerf({
+    locateFile: (file: string) => (file.endsWith(".wasm") ? lazPerfWasmUrl : file),
+  }));
+}
 
 interface Props {
   copcUrl: string;
@@ -60,6 +71,7 @@ export default function Cloud3D({ copcUrl, onUrlExpired }: Props) {
     void (async () => {
       try {
         const getter = makeGetter(copcUrl);
+        const lazPerf = await getLazPerf();
         const copc = await Copc.create(getter);
         const cube = copc.info.cube;
         const center = new THREE.Vector3(
@@ -97,7 +109,7 @@ export default function Cloud3D({ copcUrl, onUrlExpired }: Props) {
           if (disposed || budget <= 0) break;
           const node = nodes[key];
           if (!node || node.pointCount === 0 || node.pointCount > budget) continue;
-          const view = await Copc.loadPointDataView(getter, copc, node);
+          const view = await Copc.loadPointDataView(getter, copc, node, { lazPerf });
           const [gx, gy, gz] = ["X", "Y", "Z"].map((d) => view.getter(d));
           const positions = new Float32Array(view.pointCount * 3);
           const colors = new Float32Array(view.pointCount * 3);
@@ -124,6 +136,7 @@ export default function Cloud3D({ copcUrl, onUrlExpired }: Props) {
         if (!disposed) setState("ready");
       } catch (error) {
         if (disposed) return;
+        console.error("Cloud3D load failed:", error);
         setState("error");
         if ((error as { status?: number }).status === 403) onUrlExpired?.();
       }
