@@ -79,6 +79,10 @@ class SurveyArtifactsView(APIView):
                         f"{settings.TITILER_PUBLIC_URL}/cog/tiles/WebMercatorQuad"
                         "/{z}/{x}/{y}.png?url=" + _urlquote(hillshade_internal)
                     ),
+                    "tilejson_url": (
+                        f"{settings.TITILER_PUBLIC_URL}/cog/WebMercatorQuad/tilejson.json?url="
+                        + _urlquote(hillshade_internal)
+                    ),
                     "cog_url": storage.presign_get(hillshade.storage_key),
                     "sha256": hillshade.sha256,
                     "expires_in": expires_in,

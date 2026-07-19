@@ -93,7 +93,7 @@ export default function ProjectDetailPage() {
       )}
       {viewerError && <p role="alert">{t(viewerError)}</p>}
 
-      {viewer === "2d" && artifacts && <Map2D tileUrlTemplate={artifacts.hillshade.tile_url_template} />}
+      {viewer === "2d" && artifacts && <Map2D tilejsonUrl={artifacts.hillshade.tilejson_url} />}
       {viewer === "3d" && artifacts && (
         <Cloud3D
           copcUrl={artifacts.copc.url}

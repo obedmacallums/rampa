@@ -12,9 +12,9 @@
   "dependencies": {
     "@uppy/core": "^4.4.0",
     "@uppy/tus": "^4.2.0",
+    "copc": "^0.0.8",
     "i18next": "^24.2.0",
     "maplibre-gl": "^5.0.0",
-    "potree-core": "^2.0.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^15.4.0",

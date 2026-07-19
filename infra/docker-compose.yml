@@ -92,8 +92,10 @@ services:
       # allow COG fetches from minio presigned URLs
       GDAL_DISABLE_READDIR_ON_OPEN: EMPTY_DIR
       GDAL_HTTP_MERGE_CONSECUTIVE_RANGES: "YES"
+      TITILER_API_CORS_ORIGINS: "*"
     ports:
-      - "8081:8000"
+      # recent titiler images serve on :80 (older ones used :8000)
+      - "8081:80"
 
   backend:
     build:

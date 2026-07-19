@@ -67,7 +67,12 @@ export interface ArtifactSet {
   run_id: string;
   dem: { url: string; sha256: string; size_bytes: number; resolution_m: string };
   copc: { url: string; sha256: string; size_bytes: number };
-  hillshade: { tile_url_template: string; cog_url: string; sha256: string };
+  hillshade: {
+    tile_url_template: string;
+    tilejson_url: string;
+    cog_url: string;
+    sha256: string;
+  };
 }
 
 export class ApiError extends Error {
