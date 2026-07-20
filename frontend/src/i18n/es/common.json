@@ -64,6 +64,8 @@
     "interrupted": "Subida interrumpida. Vuelve a seleccionar el mismo archivo para retomar desde donde quedó.",
     "pending_title": "Subidas pendientes de reanudar",
     "pending_hint": "Selecciona nuevamente el mismo archivo en \"Subir levantamiento\" y la transferencia continuará desde el último punto confirmado.",
+    "delete": "Eliminar",
+    "delete_confirm": "¿Eliminar la subida pendiente \"{{name}}\"? Se perderá el progreso subido hasta ahora.",
     "options_heading": "Productos a generar",
     "options_help": "Elige qué productos generar a partir de este levantamiento. Los productos requeridos no pueden desmarcarse; al elegir uno que depende de otro, este se selecciona automáticamente."
   },

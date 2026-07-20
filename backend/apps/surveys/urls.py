@@ -10,11 +10,15 @@ from .views_surveys import (
     SurveyRestoreView,
     SurveyRetryView,
 )
-from .views_uploads import ProjectUploadsView
+from .views_uploads import ProjectUploadsView, UploadSessionDetailView
 
 urlpatterns = [
     path("processing-options", ProcessingOptionsView.as_view()),
     path("projects/<uuid:project_id>/uploads", ProjectUploadsView.as_view()),
+    path(
+        "projects/<uuid:project_id>/uploads/<uuid:upload_session_id>",
+        UploadSessionDetailView.as_view(),
+    ),
     path("projects/<uuid:project_id>/surveys", ProjectSurveysView.as_view()),
     path("surveys/<uuid:survey_id>", SurveyDetailView.as_view()),
     path("surveys/<uuid:survey_id>/restore", SurveyRestoreView.as_view()),

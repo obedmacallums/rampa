@@ -4,6 +4,7 @@ import datetime
 import urllib.request
 
 from django.conf import settings
+from django.http import Http404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -29,6 +30,22 @@ def _tus_offset(tus_upload_id: str) -> int | None:
             return int(resp.headers.get("Upload-Offset", 0))
     except Exception:
         return None
+
+
+def _tus_terminate(tus_upload_id: str) -> None:
+    """Best-effort cleanup of the staged bytes via tusd's termination
+    extension; a cancelled upload must not fail if tusd is unreachable —
+    the 7-day expiry purge (`purge_expired_upload_sessions`) is the
+    fallback, same tolerance as `_tus_offset` above."""
+    try:
+        req = urllib.request.Request(
+            settings.TUS_INTERNAL_URL + tus_upload_id,
+            method="DELETE",
+            headers={"Tus-Resumable": "1.0.0"},
+        )
+        urllib.request.urlopen(req, timeout=2)
+    except Exception:
+        pass
 
 
 class ProjectUploadsView(APIView):
@@ -105,3 +122,22 @@ class ProjectUploadsView(APIView):
             item["upload_session_id"] = item.pop("id")
             data.append(item)
         return Response(data)
+
+
+class UploadSessionDetailView(APIView):
+    def delete(self, request, project_id, upload_session_id):
+        """Cancel a pending upload (any project member — matches initiation
+        and listing, neither of which are owner-gated). Only ever removes
+        an in-progress `UploadSession`; a completed one has already become a
+        survey and is out of scope here."""
+        project = access.get_project_or_404(request.user, project_id)
+        try:
+            session = project.upload_sessions.get(
+                id=upload_session_id, state=UploadSession.State.ACTIVE
+            )
+        except UploadSession.DoesNotExist:
+            raise Http404 from None
+        if session.tus_upload_id:
+            _tus_terminate(session.tus_upload_id)
+        session.delete()
+        return Response(status=204)

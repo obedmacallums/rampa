@@ -64,6 +64,8 @@
     "interrupted": "Upload interrupted. Select the same file again to resume where it left off.",
     "pending_title": "Uploads pending resumption",
     "pending_hint": "Select the same file again under \"Upload survey\" and the transfer will continue from the last confirmed point.",
+    "delete": "Delete",
+    "delete_confirm": "Delete pending upload \"{{name}}\"? Progress uploaded so far will be lost.",
     "options_heading": "Products to generate",
     "options_help": "Choose which products to generate from this survey. Required products cannot be unchecked; picking one that depends on another selects it automatically."
   },

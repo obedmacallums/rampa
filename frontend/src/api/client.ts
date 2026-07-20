@@ -223,6 +223,8 @@ export const api = {
     }),
   listPendingUploads: (projectId: string) =>
     request<PendingUpload[]>(`/projects/${projectId}/uploads`),
+  deleteUpload: (projectId: string, uploadSessionId: string) =>
+    request<object>(`/projects/${projectId}/uploads/${uploadSessionId}`, { method: "DELETE" }),
 
   listMembers: (projectId: string) => request<ProjectMember[]>(`/projects/${projectId}/members`),
   addMember: (projectId: string, username: string, role: MemberRole) =>
