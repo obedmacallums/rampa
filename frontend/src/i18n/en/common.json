@@ -1,5 +1,11 @@
 {
-  "app": { "title": "Rampa — Mine Site Geometric Audit" },
+  "app": { "title": "Rampa — Mine Site Geometric Audit", "brand": "Rampa" },
+  "common": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "language": "Language"
+  },
+  "nav": { "projects": "Projects" },
   "auth": {
     "username": "Username",
     "password": "Password",
@@ -25,6 +31,7 @@
     "capture_date": "Capture date",
     "size": "Size",
     "status": "Status",
+    "view": "View",
     "view_2d": "2D map",
     "view_3d": "3D view",
     "retry": "Retry processing"
@@ -56,6 +63,8 @@
     "loading_3d": "Loading point cloud…",
     "error_3d": "The 3D view could not be loaded. Retry or download the COPC file.",
     "not_ready": "Results are not available yet.",
+    "close": "Close viewer",
+    "mode_label": "View mode",
     "basemap_label": "Basemap",
     "basemap_none": "No basemap",
     "basemap_map": "Map",

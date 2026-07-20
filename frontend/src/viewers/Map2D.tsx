@@ -234,36 +234,45 @@ export default function Map2D({ tilejsonUrl, demTilejsonUrl, demStatisticsUrl }:
   }, [surveyLayer]);
 
   return (
-    <div>
-      <div role="radiogroup" aria-label={t("viewer.basemap_label")} style={{ margin: "0.5rem 0" }}>
-        <strong style={{ marginRight: "0.5rem" }}>{t("viewer.basemap_label")}:</strong>
-        {BASEMAPS.map((option) => (
-          <label key={option} style={{ marginRight: "1rem" }}>
-            <input
-              type="radio"
-              name="basemap"
-              checked={basemap === option}
-              onChange={() => setBasemap(option)}
-            />{" "}
-            {t(`viewer.basemap_${option}`)}
-          </label>
-        ))}
+    <div className="relative h-full w-full">
+      {/* h-full, not absolute: maplibre-gl.css loads after Tailwind and forces
+          position:relative on .maplibregl-map, which would collapse an
+          absolutely-positioned container to zero height. */}
+      <div ref={container} className="h-full w-full" />
+      <div className="absolute left-3 top-3 z-10 grid gap-3 rounded-lg border border-surface-2 bg-surface-1/95 p-3 shadow-lg">
+        <div role="radiogroup" aria-label={t("viewer.basemap_label")} className="grid gap-1">
+          <strong className="text-xs font-semibold text-text-muted">
+            {t("viewer.basemap_label")}
+          </strong>
+          {BASEMAPS.map((option) => (
+            <label key={option} className="flex items-center gap-1.5 text-xs">
+              <input
+                type="radio"
+                name="basemap"
+                checked={basemap === option}
+                onChange={() => setBasemap(option)}
+              />
+              {t(`viewer.basemap_${option}`)}
+            </label>
+          ))}
+        </div>
+        <div role="radiogroup" aria-label={t("viewer.layer_label")} className="grid gap-1">
+          <strong className="text-xs font-semibold text-text-muted">
+            {t("viewer.layer_label")}
+          </strong>
+          {SURVEY_LAYERS.filter((option) => demAvailable || option === "relief").map((option) => (
+            <label key={option} className="flex items-center gap-1.5 text-xs">
+              <input
+                type="radio"
+                name="survey-layer"
+                checked={surveyLayer === option}
+                onChange={() => setSurveyLayer(option)}
+              />
+              {t(`viewer.layer_${option}`)}
+            </label>
+          ))}
+        </div>
       </div>
-      <div role="radiogroup" aria-label={t("viewer.layer_label")} style={{ margin: "0.5rem 0" }}>
-        <strong style={{ marginRight: "0.5rem" }}>{t("viewer.layer_label")}:</strong>
-        {SURVEY_LAYERS.filter((option) => demAvailable || option === "relief").map((option) => (
-          <label key={option} style={{ marginRight: "1rem" }}>
-            <input
-              type="radio"
-              name="survey-layer"
-              checked={surveyLayer === option}
-              onChange={() => setSurveyLayer(option)}
-            />{" "}
-            {t(`viewer.layer_${option}`)}
-          </label>
-        ))}
-      </div>
-      <div ref={container} style={{ width: "100%", height: 480 }} />
     </div>
   );
 }

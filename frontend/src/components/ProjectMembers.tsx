@@ -4,6 +4,10 @@ import { useTranslation } from "react-i18next";
 import { MemberRole } from "../api/client";
 import { useMembers } from "../stores/members";
 import { useSession } from "../stores/session";
+import Alert from "../ui/Alert";
+import Button from "../ui/Button";
+import ConfirmDialog from "../ui/ConfirmDialog";
+import Field from "../ui/Field";
 
 // Member panel (002 US3): every member sees the list with its audit columns
 // (FR-007/FR-009); management controls render only for owners. Adding a
@@ -14,6 +18,7 @@ export default function ProjectMembers({ projectId }: { projectId: string }) {
   const { members, error, load, add, updateRole, remove } = useMembers();
   const [username, setUsername] = useState("");
   const [role, setRole] = useState<MemberRole>("member");
+  const [removeTarget, setRemoveTarget] = useState<string | null>(null);
 
   useEffect(() => {
     void load(projectId);
@@ -31,25 +36,33 @@ export default function ProjectMembers({ projectId }: { projectId: string }) {
     }
   };
 
-  const confirmRemove = (target: string) => {
-    if (window.confirm(t("members.remove_confirm", { username: target }))) {
-      void remove(projectId, target);
-    }
-  };
-
   return (
-    <section>
-      <h2>{t("members.title")}</h2>
-      <ul>
+    <section className="grid gap-4">
+      <h2 className="text-lg font-semibold text-text-strong">{t("members.title")}</h2>
+      <ul className="grid gap-2">
         {members.map((member) => (
-          <li key={member.username}>
-            <strong>{member.username}</strong> — {roleLabel(member.role)} (
-            {member.granted_by ?? t("members.granted_by_system")},{" "}
-            {new Date(member.granted_at).toLocaleDateString(i18n.language)})
+          <li
+            key={member.username}
+            className="flex flex-wrap items-center gap-3 rounded-lg border border-surface-2 bg-surface-1 px-4 py-2.5 text-sm"
+          >
+            <span className="font-medium text-text-strong">{member.username}</span>
+            <span
+              className={
+                member.role === "owner"
+                  ? "rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-xs text-accent"
+                  : "rounded-full border border-surface-2 px-2 py-0.5 text-xs text-text-muted"
+              }
+            >
+              {roleLabel(member.role)}
+            </span>
+            <span className="text-xs text-text-muted">
+              {member.granted_by ?? t("members.granted_by_system")},{" "}
+              {new Date(member.granted_at).toLocaleDateString(i18n.language)}
+            </span>
             {isOwner && (
-              <>
-                {" "}
-                <button
+              <span className="ml-auto flex gap-2">
+                <Button
+                  variant="secondary"
                   onClick={() =>
                     void updateRole(
                       projectId,
@@ -59,35 +72,51 @@ export default function ProjectMembers({ projectId }: { projectId: string }) {
                   }
                 >
                   {t(member.role === "owner" ? "members.revoke_owner" : "members.grant_owner")}
-                </button>{" "}
-                <button onClick={() => confirmRemove(member.username)}>
+                </Button>
+                <Button variant="danger" onClick={() => setRemoveTarget(member.username)}>
                   {t("members.remove")}
-                </button>
-              </>
+                </Button>
+              </span>
             )}
           </li>
         ))}
       </ul>
 
       {isOwner && (
-        <form onSubmit={(e) => void submit(e)}>
-          <label>
-            {t("members.add_label")}{" "}
+        <form
+          onSubmit={(e) => void submit(e)}
+          className="flex flex-wrap items-end gap-3 rounded-lg border border-surface-2 bg-surface-1 p-4"
+        >
+          <Field label={t("members.add_label")}>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder={t("auth.username")}
             />
-          </label>{" "}
+          </Field>
           <select value={role} onChange={(e) => setRole(e.target.value as MemberRole)}>
             <option value="member">{t("members.role_member")}</option>
             <option value="owner">{t("members.role_owner")}</option>
-          </select>{" "}
-          <button type="submit">{t("members.add_label")}</button>
+          </select>
+          <Button type="submit" variant="secondary">
+            {t("members.add_label")}
+          </Button>
         </form>
       )}
 
-      {error && <p role="alert">{t(error)}</p>}
+      {error && <Alert>{t(error)}</Alert>}
+
+      <ConfirmDialog
+        open={removeTarget !== null}
+        message={removeTarget ? t("members.remove_confirm", { username: removeTarget }) : ""}
+        confirmLabel={t("members.remove")}
+        cancelLabel={t("common.cancel")}
+        onConfirm={() => {
+          if (removeTarget) void remove(projectId, removeTarget);
+          setRemoveTarget(null);
+        }}
+        onCancel={() => setRemoveTarget(null)}
+      />
     </section>
   );
 }

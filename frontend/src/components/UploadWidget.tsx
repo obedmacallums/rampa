@@ -8,6 +8,10 @@ import { FormEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api, ApiError } from "../api/client";
+import Alert from "../ui/Alert";
+import Button from "../ui/Button";
+import Field from "../ui/Field";
+import ProgressBar from "../ui/ProgressBar";
 
 interface Props {
   projectId: string;
@@ -71,32 +75,36 @@ export default function UploadWidget({ projectId, onUploadFinished }: Props) {
   };
 
   return (
-    <form onSubmit={submit} style={{ display: "grid", gap: 8, maxWidth: 480 }}>
-      <h2>{t("upload.title")}</h2>
-      <label>
-        {t("upload.file")}
+    <form
+      onSubmit={submit}
+      className="grid max-w-lg gap-4 rounded-lg border border-surface-2 bg-surface-1 p-4"
+    >
+      <h2 className="text-lg font-semibold text-text-strong">{t("upload.title")}</h2>
+      <Field label={t("upload.file")}>
         <input ref={fileInput} type="file" accept=".las,.laz" required />
-      </label>
-      <label>
-        {t("upload.capture_date")}
+      </Field>
+      <Field label={t("upload.capture_date")}>
         <input
           type="date"
           value={captureDate}
           onChange={(e) => setCaptureDate(e.target.value)}
           required
         />
-      </label>
-      <label>
-        {t("upload.survey_name")}
+      </Field>
+      <Field label={t("upload.survey_name")}>
         <input value={surveyName} onChange={(e) => setSurveyName(e.target.value)} maxLength={120} />
-      </label>
-      <button type="submit" disabled={percent !== null}>
+      </Field>
+      <Button type="submit" disabled={percent !== null}>
         {t("upload.start")}
-      </button>
-      {percent !== null && <progress value={percent} max={100} />}
-      {percent !== null && <span>{t("upload.progress", { percent })}</span>}
-      {messageKey && <p>{t(messageKey)}</p>}
-      {errorKey && <p role="alert">{t(errorKey)}</p>}
+      </Button>
+      {percent !== null && (
+        <div className="grid gap-1.5">
+          <ProgressBar percent={percent} />
+          <span className="text-xs text-text-muted">{t("upload.progress", { percent })}</span>
+        </div>
+      )}
+      {messageKey && <Alert kind="info">{t(messageKey)}</Alert>}
+      {errorKey && <Alert>{t(errorKey)}</Alert>}
     </form>
   );
 }

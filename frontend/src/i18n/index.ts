@@ -8,12 +8,16 @@ import enErrors from "./en/errors.json";
 import esCommon from "./es/common.json";
 import esErrors from "./es/errors.json";
 
+// User choice persists in localStorage ("rampa.lang"); Spanish remains the default.
+const storedLang =
+  typeof localStorage !== "undefined" ? localStorage.getItem("rampa.lang") : null;
+
 void i18n.use(initReactI18next).init({
   resources: {
     es: { translation: { ...esCommon, errors: esErrors } },
     en: { translation: { ...enCommon, errors: enErrors } },
   },
-  lng: "es",
+  lng: storedLang === "en" ? "en" : "es",
   fallbackLng: "es",
   interpolation: { escapeValue: false },
 });

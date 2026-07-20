@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 
 import { ApiError } from "../api/client";
 import { useSession } from "../stores/session";
+import Alert from "../ui/Alert";
+import Button from "../ui/Button";
+import Field from "../ui/Field";
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -25,17 +28,31 @@ export default function LoginPage() {
   };
 
   return (
-    <form onSubmit={submit} style={{ maxWidth: 320, margin: "4rem auto", display: "grid", gap: 8 }}>
-      <label>
-        {t("auth.username")}
-        <input value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
-      </label>
-      <label>
-        {t("auth.password")}
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      </label>
-      {errorKey && <p role="alert">{t(errorKey)}</p>}
-      <button type="submit">{t("auth.login")}</button>
-    </form>
+    <main className="mx-auto max-w-sm px-6 pt-24">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-semibold tracking-tight text-text-strong">
+          {t("app.brand")}
+          <span className="text-accent">.</span>
+        </h1>
+        <p className="mt-2 text-sm text-text-muted">{t("app.title")}</p>
+      </div>
+      <form
+        onSubmit={submit}
+        className="grid gap-4 rounded-lg border border-surface-2 bg-surface-1 p-6"
+      >
+        <Field label={t("auth.username")}>
+          <input value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
+        </Field>
+        <Field label={t("auth.password")}>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </Field>
+        {errorKey && <Alert>{t(errorKey)}</Alert>}
+        <Button type="submit">{t("auth.login")}</Button>
+      </form>
+    </main>
   );
 }

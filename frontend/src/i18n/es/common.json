@@ -1,5 +1,11 @@
 {
-  "app": { "title": "Rampa — Auditoría Geométrica de Faenas" },
+  "app": { "title": "Rampa — Auditoría Geométrica de Faenas", "brand": "Rampa" },
+  "common": {
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "language": "Idioma"
+  },
+  "nav": { "projects": "Proyectos" },
   "auth": {
     "username": "Usuario",
     "password": "Contraseña",
@@ -25,6 +31,7 @@
     "capture_date": "Fecha de captura",
     "size": "Tamaño",
     "status": "Estado",
+    "view": "Ver",
     "view_2d": "Mapa 2D",
     "view_3d": "Vista 3D",
     "retry": "Reintentar procesamiento"
@@ -56,6 +63,8 @@
     "loading_3d": "Cargando nube de puntos…",
     "error_3d": "No fue posible cargar la vista 3D. Reintenta o descarga el archivo COPC.",
     "not_ready": "Los resultados aún no están disponibles.",
+    "close": "Cerrar visor",
+    "mode_label": "Modo de vista",
     "basemap_label": "Mapa base",
     "basemap_none": "Sin fondo",
     "basemap_map": "Mapa",

@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useUploads } from "../stores/uploads";
+import ProgressBar from "../ui/ProgressBar";
 
 export default function PendingUploads({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
@@ -18,21 +19,21 @@ export default function PendingUploads({ projectId }: { projectId: string }) {
   if (pending.length === 0) return null;
 
   return (
-    <section>
-      <h3>{t("upload.pending_title")}</h3>
-      <ul>
+    <section className="grid gap-3 rounded-lg border border-status-warning/40 bg-status-warning/5 p-4">
+      <h3 className="text-sm font-semibold text-status-warning">{t("upload.pending_title")}</h3>
+      <ul className="grid gap-3">
         {pending.map((upload) => (
-          <li key={upload.upload_session_id}>
-            {upload.declared_filename}{" "}
+          <li key={upload.upload_session_id} className="grid gap-1.5 text-sm">
+            <span className="truncate">{upload.declared_filename}</span>
             {upload.received_bytes !== null && (
-              <progress value={upload.received_bytes} max={upload.declared_size_bytes} />
+              <ProgressBar
+                percent={Math.round((100 * upload.received_bytes) / upload.declared_size_bytes)}
+              />
             )}
           </li>
         ))}
       </ul>
-      <p>
-        <small>{t("upload.pending_hint")}</small>
-      </p>
+      <p className="text-xs text-text-muted">{t("upload.pending_hint")}</p>
     </section>
   );
 }

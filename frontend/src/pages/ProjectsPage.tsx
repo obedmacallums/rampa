@@ -1,13 +1,18 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { ApiError } from "../api/client";
 import { useProjects } from "../stores/projects";
+import Alert from "../ui/Alert";
+import Button from "../ui/Button";
+import EmptyState from "../ui/EmptyState";
+import Field from "../ui/Field";
 
 export default function ProjectsPage() {
   const { t } = useTranslation();
   const { projects, crsCatalog, fetch, create } = useProjects();
+  const nameInput = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [crsId, setCrsId] = useState<number | "">("");
   const [errorKey, setErrorKey] = useState<string | null>(null);
@@ -29,16 +34,25 @@ export default function ProjectsPage() {
   };
 
   return (
-    <main style={{ maxWidth: 720, margin: "0 auto", padding: "1rem" }}>
-      <h1>{t("projects.title")}</h1>
+    <main className="mx-auto max-w-3xl px-6 py-8">
+      <h1 className="text-2xl font-semibold tracking-tight text-text-strong">
+        {t("projects.title")}
+      </h1>
 
-      <form onSubmit={submit} style={{ display: "flex", gap: 8, alignItems: "end" }}>
-        <label>
-          {t("projects.name")}
-          <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} />
-        </label>
-        <label>
-          {t("projects.crs")}
+      <form
+        onSubmit={submit}
+        className="mt-6 flex flex-wrap items-end gap-4 rounded-lg border border-surface-2 bg-surface-1 p-4"
+      >
+        <Field label={t("projects.name")}>
+          <input
+            ref={nameInput}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            maxLength={120}
+          />
+        </Field>
+        <Field label={t("projects.crs")}>
           <select value={crsId} onChange={(e) => setCrsId(Number(e.target.value))} required>
             <option value="" disabled />
             {crsCatalog.map((entry) => (
@@ -47,21 +61,40 @@ export default function ProjectsPage() {
               </option>
             ))}
           </select>
-        </label>
-        <button type="submit">{t("projects.create")}</button>
+        </Field>
+        <Button type="submit">{t("projects.create")}</Button>
       </form>
-      {errorKey && <p role="alert">{t(errorKey)}</p>}
+      {errorKey && (
+        <div className="mt-3">
+          <Alert>{t(errorKey)}</Alert>
+        </div>
+      )}
 
       {projects.length === 0 ? (
-        <p>{t("projects.empty")}</p>
+        <div className="mt-8">
+          <EmptyState
+            message={t("projects.empty")}
+            action={
+              <Button variant="secondary" onClick={() => nameInput.current?.focus()}>
+                {t("projects.create")}
+              </Button>
+            }
+          />
+        </div>
       ) : (
-        <ul>
+        <ul className="mt-8 grid gap-3">
           {projects.map((project) => (
             <li key={project.id}>
-              <Link to={`/projects/${project.id}`}>{project.name}</Link>{" "}
-              <small>
-                {project.crs.code} — {t("projects.surveys_count", { count: project.survey_count })}
-              </small>
+              <Link
+                to={`/projects/${project.id}`}
+                className="block rounded-lg border border-surface-2 bg-surface-1 px-4 py-3 transition-colors hover:border-accent/60"
+              >
+                <span className="font-medium text-text-strong">{project.name}</span>
+                <span className="mt-1 block text-xs text-text-muted">
+                  {project.crs.code} —{" "}
+                  {t("projects.surveys_count", { count: project.survey_count })}
+                </span>
+              </Link>
             </li>
           ))}
         </ul>

@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 
 import LoginPage from "./pages/LoginPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import { useSession } from "./stores/session";
+import Button from "./ui/Button";
+import LanguageSwitcher from "./ui/LanguageSwitcher";
 
 export default function App() {
   const { t } = useTranslation();
@@ -19,18 +21,41 @@ export default function App() {
   if (!ready) return null;
 
   return (
-    <div>
-      <header style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 1rem" }}>
-        <strong>{t("app.title")}</strong>
-        {user && (
-          <button
-            onClick={() => {
-              void logout().then(() => navigate("/login"));
-            }}
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-40 border-b border-surface-2 bg-surface-1">
+        <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-6">
+          <Link
+            to="/"
+            className="text-lg font-semibold tracking-tight text-text-strong"
+            title={t("app.title")}
           >
-            {t("auth.logout")}
-          </button>
-        )}
+            {t("app.brand")}
+            <span className="text-accent">.</span>
+          </Link>
+          {user && (
+            <nav className="flex items-center gap-4 text-sm">
+              <Link to="/" className="text-text-muted transition-colors hover:text-text-strong">
+                {t("nav.projects")}
+              </Link>
+            </nav>
+          )}
+          <div className="ml-auto flex items-center gap-3">
+            <LanguageSwitcher />
+            {user && (
+              <>
+                <span className="text-sm text-text-muted">{user.username}</span>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    void logout().then(() => navigate("/login"));
+                  }}
+                >
+                  {t("auth.logout")}
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
       </header>
       <Routes>
         <Route path="/login" element={<LoginPage />} />

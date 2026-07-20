@@ -10,6 +10,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import Alert from "../ui/Alert";
+
 interface Props {
   copcUrl: string;
   onUrlExpired?: () => void;
@@ -126,8 +128,7 @@ export default function Cloud3D({ copcUrl, onUrlExpired }: Props) {
         if (!shared) {
           const host = document.createElement("div");
           host.className = "potree_container";
-          host.style.cssText =
-            "position:relative;width:100%;height:75vh;min-height:480px";
+          host.style.cssText = "position:relative;width:100%;height:100%";
           const renderArea = document.createElement("div");
           renderArea.id = "potree_render_area";
           renderArea.style.cssText = "position:absolute;inset:0";
@@ -179,10 +180,18 @@ export default function Cloud3D({ copcUrl, onUrlExpired }: Props) {
   }, [copcUrl, onUrlExpired]);
 
   return (
-    <div>
-      <div ref={container} style={{ width: "100%" }} />
-      {state === "loading" && <p>{t("viewer.loading_3d")}</p>}
-      {state === "error" && <p role="alert">{t("viewer.error_3d")}</p>}
+    <div className="relative h-full w-full">
+      <div ref={container} className="h-full w-full" />
+      {state === "loading" && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <p className="animate-pulse text-sm text-text-muted">{t("viewer.loading_3d")}</p>
+        </div>
+      )}
+      {state === "error" && (
+        <div className="absolute inset-x-0 top-4 mx-auto max-w-md px-4">
+          <Alert>{t("viewer.error_3d")}</Alert>
+        </div>
+      )}
     </div>
   );
 }

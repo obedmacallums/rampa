@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api, SurveyDetail, Stage } from "../api/client";
+import Badge from "../ui/Badge";
+import Button from "../ui/Button";
 
 const STAGES: Stage[] = ["validation", "reprojection", "surface_generation"];
 const POLL_MS = 4000;
@@ -51,27 +53,33 @@ export default function SurveyStatus({ surveyId, onTerminal }: Props) {
   const run = detail.latest_run;
 
   return (
-    <div>
-      <strong>{t(`status.${detail.status}`)}</strong>
+    <div className="grid justify-items-start gap-1.5">
+      <Badge status={detail.status} label={t(`status.${detail.status}`)} />
       {detail.status === "processing" && run && (
-        <ol style={{ display: "flex", gap: 12, listStyle: "none", padding: 0 }}>
+        <ol className="flex gap-3 text-xs">
           {STAGES.map((stage) => (
-            <li key={stage} style={{ fontWeight: run.stage === stage ? "bold" : "normal" }}>
+            <li
+              key={stage}
+              className={
+                run.stage === stage ? "font-semibold text-status-processing" : "text-text-muted"
+              }
+            >
               {t(`stage.${stage}`)}
             </li>
           ))}
         </ol>
       )}
       {detail.status === "failed" && run?.failure_message_key && (
-        <div role="alert">
-          <p>{t(run.failure_message_key)}</p>
-          <button
+        <div role="alert" className="grid justify-items-start gap-2">
+          <p className="text-xs text-status-failed">{t(run.failure_message_key)}</p>
+          <Button
+            variant="secondary"
             onClick={() => {
               void api.retrySurvey(surveyId).then(refresh);
             }}
           >
             {t("surveys.retry")}
-          </button>
+          </Button>
         </div>
       )}
     </div>
