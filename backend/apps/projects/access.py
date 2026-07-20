@@ -13,8 +13,9 @@ from .models import Project, ProjectMembership
 
 
 def projects_for(user):
-    """Projects visible to ``user``: exactly their memberships (FR-001)."""
-    return Project.objects.filter(memberships__user=user)
+    """Projects visible to ``user``: exactly their memberships, excluding
+    soft-deleted projects (FR-001/FR-005, 005)."""
+    return Project.objects.filter(memberships__user=user, deleted_at__isnull=True)
 
 
 def get_project_or_404(user, project_id):
@@ -25,12 +26,17 @@ def get_project_or_404(user, project_id):
 
 
 def get_survey_or_404(user, survey_id, queryset=None):
-    """Resolve a survey through the caller's project scope (FR-002)."""
+    """Resolve a survey through the caller's project scope (FR-002), excluding
+    a soft-deleted survey or one whose project is soft-deleted (FR-005, 005)."""
     from apps.surveys.models import Survey
 
     qs = queryset if queryset is not None else Survey.objects.all()
     try:
-        return qs.filter(project__memberships__user=user).get(id=survey_id)
+        return qs.filter(
+            project__memberships__user=user,
+            deleted_at__isnull=True,
+            project__deleted_at__isnull=True,
+        ).get(id=survey_id)
     except Survey.DoesNotExist:
         raise Http404 from None
 

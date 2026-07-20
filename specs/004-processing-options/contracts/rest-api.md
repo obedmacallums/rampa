@@ -98,6 +98,32 @@ Still 202/`{"run": …}`; still 409 `not_retriable` unless survey `failed`.
 The new run carries the previous effective selection; options completed in a
 prior run are created as `reused` and not re-executed (FR-004/R5).
 
+## POST /surveys/{surveyId}/process *(new, US3)*
+
+Request more products on an already-processed survey, reusing the stored
+source file — no re-upload. Same body/validation as upload initiation:
+
+```json
+// request
+{ "selected_options": ["point_cloud_3d"] }
+```
+
+Validation is identical to upload initiation: every id must exist, be
+active, and apply to the survey's `input_type`; the server completes the
+closure (required + prerequisites) exactly as at upload time. Errors:
+`invalid_options` 400 (`detail.invalid` lists offending ids).
+
+```json
+// 202
+{ "run": { "id": "…", "number": 3, "stage": "validation", "state": "queued", "...": "..." } }
+```
+
+409 `not_processable` while the survey already has a run `queued` or
+`running` (avoids overlapping runs against the same source). Options in the
+effective selection that a prior run already completed are created as
+`reused` on the new run and not re-executed (R5, same mechanics as retry);
+only the newly requested (incomplete) options actually run.
+
 ## GET /surveys/{surveyId}/artifacts *(modified — resolved per option, FR-016)*
 
 Was: latest fully-completed run or 409. Now: resolution per option across

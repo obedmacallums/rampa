@@ -21,6 +21,11 @@
   "user_not_found": "No user exists with that username. Check the exact spelling.",
   "already_member": "That user is already a member of the project.",
   "last_owner": "A project must always have at least one owner.",
-  "not_owner": "Only an owner can manage the project's members.",
-  "invalid_role": "The given role is not valid."
+  "not_owner": "You must be an owner of the project to perform this action.",
+  "invalid_role": "The given role is not valid.",
+  "invalid_options": "One or more selected processing options are invalid.",
+  "invalid_input_type": "The given input type is not valid.",
+  "not_processable": "This survey already has processing under way. Wait for it to finish before requesting more products.",
+  "not_deletable": "This can't be deleted while processing is under way or an upload is active.",
+  "not_restorable": "This can't be restored: it doesn't exist, was already restored, or its recovery window has passed."
 }

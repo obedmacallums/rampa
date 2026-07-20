@@ -32,6 +32,10 @@ class UploadSession(models.Model):
     state = models.CharField(max_length=16, choices=State.choices, default=State.ACTIVE)
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    # Effective selection (server-completed closure incl. required), always
+    # computed from the registry by the initiation view — never defaulted
+    # here, so this schema carries no catalog knowledge (data-model.md).
+    selected_options = models.JSONField(default=list, blank=True)
 
 
 class Survey(models.Model):
@@ -58,8 +62,23 @@ class Survey(models.Model):
     source_key = models.CharField(max_length=512)
     source_sha256 = models.CharField(max_length=64, null=True, blank=True)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.QUEUED)
+    # Registry input-type id (FR-013); `point_cloud` is the only entry today.
+    input_type = models.CharField(max_length=32, default="point_cloud")
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Soft delete (005): same semantics as Project.deleted_at/deleted_by.
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    # True only while cascade-deleted alongside its project (R2); always
+    # False for an independent survey deletion. Governs whether a
+    # project-level delete/restore touches this survey.
+    deleted_via_project_cascade = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["capture_date", "created_at"]
@@ -82,6 +101,8 @@ class ProcessingRun(models.Model):
     number = models.PositiveIntegerField()
     stage = models.CharField(max_length=32, choices=Stage.choices, default=Stage.VALIDATION)
     state = models.CharField(max_length=16, choices=State.choices, default=State.QUEUED)
+    # Copied from the survey at enqueue time (FR-013).
+    input_type = models.CharField(max_length=32, default="point_cloud")
     failure_code = models.CharField(max_length=64, null=True, blank=True)
     failure_message_key = models.CharField(max_length=100, null=True, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)
@@ -94,6 +115,40 @@ class ProcessingRun(models.Model):
         ordering = ["number"]
 
 
+class RunOption(models.Model):
+    """One row per option in a run's effective selection: unit of selection
+    persistence, progress, publication and failure attribution (FR-004/FR-009/
+    FR-010, data-model.md)."""
+
+    class State(models.TextChoices):
+        PENDING = "pending"
+        RUNNING = "running"
+        COMPLETED = "completed"
+        FAILED = "failed"
+        SKIPPED = "skipped"
+        REUSED = "reused"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    run = models.ForeignKey(ProcessingRun, on_delete=models.CASCADE, related_name="options")
+    option_id = models.CharField(max_length=64)
+    state = models.CharField(max_length=16, choices=State.choices, default=State.PENDING)
+    # Producing run when state=reused; already resolved transitively at
+    # creation time, so it never points at another `reused` row (R5).
+    reused_from = models.ForeignKey(
+        ProcessingRun, on_delete=models.SET_NULL, null=True, blank=True, related_name="reused_by"
+    )
+    failure_code = models.CharField(max_length=64, null=True, blank=True)
+    failure_message_key = models.CharField(max_length=100, null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["run", "option_id"], name="run_option_unique")
+        ]
+        ordering = ["option_id"]
+
+
 class DerivedArtifact(models.Model):
     class Kind(models.TextChoices):
         DEM = "dem"
@@ -103,6 +158,10 @@ class DerivedArtifact(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     run = models.ForeignKey(ProcessingRun, on_delete=models.CASCADE, related_name="artifacts")
     kind = models.CharField(max_length=16, choices=Kind.choices)
+    # Registry option id attribution (FR-005); enforced NOT NULL by the
+    # database — every row is attributed, backfilled (T007) before this was
+    # promoted (T033).
+    option_id = models.CharField(max_length=64)
     storage_key = models.CharField(max_length=512)
     size_bytes = models.BigIntegerField()
     sha256 = models.CharField(max_length=64)

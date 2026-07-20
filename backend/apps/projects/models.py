@@ -31,6 +31,16 @@ class Project(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="projects"
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    # Soft delete (005): NULL = active. `deleted_by` is SET_NULL so a removed
+    # user account never blocks restore/recently-deleted listings.
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
 
     class Meta:
         constraints = [

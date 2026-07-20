@@ -1,7 +1,7 @@
 // 3D viewer: Potree 1.8.2 (static assets under /potree) streams the COPC
 // octree via HTTP range requests with camera-driven progressive LOD. The
 // presigned URL is probed before loading so an expired link triggers
-// onUrlExpired and the parent can remount with a fresh ArtifactSet.
+// onUrlExpired and the parent can remount with a fresh product set.
 //
 // Potree ships as classic scripts (global namespace), not an npm module, so
 // its build and support libraries are served from public/potree and loaded
@@ -21,13 +21,19 @@ interface PotreePointCloud {
   material: { size: number; pointSizeType: number };
 }
 
+interface PotreeScene {
+  addPointCloud(pointcloud: PotreePointCloud): void;
+  pointclouds: PotreePointCloud[];
+  scenePointCloud: { remove(object: PotreePointCloud): void };
+}
+
 interface PotreeViewer {
   setEDLEnabled(enabled: boolean): void;
   setFOV(fov: number): void;
   setPointBudget(budget: number): void;
   setLanguage(lang: string): void;
   loadGUI(callback?: () => void): void;
-  scene: { addPointCloud(pointcloud: PotreePointCloud): void };
+  scene: PotreeScene;
   fitToScreen(factor?: number): void;
 }
 
@@ -156,6 +162,13 @@ export default function Cloud3D({ copcUrl, onUrlExpired }: Props) {
           return;
         }
         const current = shared;
+        // The shared viewer is re-parented, not recreated, across surveys
+        // (Potree has no dispose API) — addPointCloud only ever appends, so
+        // a previously viewed survey's cloud must be explicitly dropped or
+        // it stays rendered underneath/alongside the new one.
+        for (const stale of current.viewer.scene.pointclouds.splice(0)) {
+          current.viewer.scene.scenePointCloud.remove(stale);
+        }
         Potree.loadPointCloud(copcUrl, "survey", (event) => {
           if (disposed) return;
           current.viewer.scene.addPointCloud(event.pointcloud);

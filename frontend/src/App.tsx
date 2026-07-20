@@ -5,6 +5,7 @@ import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
+import RecentlyDeletedPage from "./pages/RecentlyDeletedPage";
 import { useSession } from "./stores/session";
 import Button from "./ui/Button";
 import LanguageSwitcher from "./ui/LanguageSwitcher";
@@ -63,6 +64,10 @@ export default function App() {
         <Route
           path="/projects/:projectId"
           element={user ? <ProjectDetailPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/deleted"
+          element={user ? <RecentlyDeletedPage /> : <Navigate to="/login" />}
         />
       </Routes>
     </div>

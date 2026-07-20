@@ -2,10 +2,11 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
-import { ApiError } from "../api/client";
+import { api, ApiError, ProjectSummary } from "../api/client";
 import { useProjects } from "../stores/projects";
 import Alert from "../ui/Alert";
 import Button from "../ui/Button";
+import ConfirmDialog from "../ui/ConfirmDialog";
 import EmptyState from "../ui/EmptyState";
 import Field from "../ui/Field";
 
@@ -16,6 +17,8 @@ export default function ProjectsPage() {
   const [name, setName] = useState("");
   const [crsId, setCrsId] = useState<number | "">("");
   const [errorKey, setErrorKey] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     void fetch();
@@ -33,11 +36,28 @@ export default function ProjectsPage() {
     }
   };
 
+  const confirmDeleteProject = async () => {
+    if (!deleteTarget) return;
+    try {
+      await api.deleteProject(deleteTarget.id);
+      setDeleteTarget(null);
+      await fetch();
+    } catch (error) {
+      setDeleteError(error instanceof ApiError ? error.messageKey : "errors.invalid_request");
+      setDeleteTarget(null);
+    }
+  };
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight text-text-strong">
-        {t("projects.title")}
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight text-text-strong">
+          {t("projects.title")}
+        </h1>
+        <Link to="/deleted" className="text-sm text-text-muted transition-colors hover:text-text-strong">
+          {t("nav.deleted")}
+        </Link>
+      </div>
 
       <form
         onSubmit={submit}
@@ -84,21 +104,41 @@ export default function ProjectsPage() {
       ) : (
         <ul className="mt-8 grid gap-3">
           {projects.map((project) => (
-            <li key={project.id}>
-              <Link
-                to={`/projects/${project.id}`}
-                className="block rounded-lg border border-surface-2 bg-surface-1 px-4 py-3 transition-colors hover:border-accent/60"
-              >
+            <li
+              key={project.id}
+              className="flex items-center gap-3 rounded-lg border border-surface-2 bg-surface-1 px-4 py-3 transition-colors hover:border-accent/60"
+            >
+              <Link to={`/projects/${project.id}`} className="flex-1">
                 <span className="font-medium text-text-strong">{project.name}</span>
                 <span className="mt-1 block text-xs text-text-muted">
                   {project.crs.code} —{" "}
                   {t("projects.surveys_count", { count: project.survey_count })}
                 </span>
               </Link>
+              {project.is_owner && (
+                <Button variant="danger" onClick={() => setDeleteTarget(project)}>
+                  {t("projects.delete")}
+                </Button>
+              )}
             </li>
           ))}
         </ul>
       )}
+
+      {deleteError && (
+        <div className="mt-3">
+          <Alert>{t(deleteError)}</Alert>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        message={deleteTarget ? t("projects.delete_confirm", { name: deleteTarget.name }) : ""}
+        confirmLabel={t("projects.delete")}
+        cancelLabel={t("common.cancel")}
+        onConfirm={() => void confirmDeleteProject()}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </main>
   );
 }

@@ -3,6 +3,14 @@ const STATUS_CLASSES = {
   processing: "border-status-processing/40 bg-status-processing/10 text-status-processing",
   completed: "border-status-completed/40 bg-status-completed/10 text-status-completed",
   failed: "border-status-failed/40 bg-status-failed/10 text-status-failed",
+  // Per-option states (RunOption, FR-010): pending/running mirror
+  // queued/processing; reused is a successful, previously-produced result
+  // (same hue as completed); skipped signals a consequence of another
+  // option's failure.
+  pending: "border-status-queued/40 bg-status-queued/10 text-status-queued",
+  running: "border-status-processing/40 bg-status-processing/10 text-status-processing",
+  reused: "border-status-completed/40 bg-status-completed/10 text-status-completed",
+  skipped: "border-status-warning/40 bg-status-warning/10 text-status-warning",
 } as const;
 
 export type BadgeProps = {

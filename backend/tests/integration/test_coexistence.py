@@ -7,6 +7,8 @@ from pipeline import storage
 
 pytestmark = pytest.mark.django_db
 
+KIND_TO_OPTION = {"dem": "elevation", "hillshade": "hillshade", "copc": "point_cloud_3d"}
+
 
 def _completed_survey(project, user, name, capture_date, shas):
     survey = Survey.objects.create(
@@ -28,6 +30,7 @@ def _completed_survey(project, user, name, capture_date, shas):
         DerivedArtifact.objects.create(
             run=run,
             kind=kind,
+            option_id=KIND_TO_OPTION[kind],
             storage_key=storage.run_key(project.id, survey.id, run.id, f"{kind}.bin"),
             size_bytes=100,
             sha256=sha,

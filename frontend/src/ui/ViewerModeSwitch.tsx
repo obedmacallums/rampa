@@ -23,13 +23,26 @@ function CubeIcon() {
 export type ViewerModeSwitchProps = {
   mode: ViewerMode;
   onChange: (mode: ViewerMode) => void;
+  // Product-driven gating (FR-005/FR-016): a mode only appears once its
+  // product has resolved for the survey.
+  show2d?: boolean;
+  show3d?: boolean;
 };
 
-export default function ViewerModeSwitch({ mode, onChange }: ViewerModeSwitchProps) {
+export default function ViewerModeSwitch({
+  mode,
+  onChange,
+  show2d = true,
+  show3d = true,
+}: ViewerModeSwitchProps) {
   const { t } = useTranslation();
   const options = [
-    { value: "2d" as const, label: "2D", title: t("surveys.view_2d"), icon: <MapIcon /> },
-    { value: "3d" as const, label: "3D", title: t("surveys.view_3d"), icon: <CubeIcon /> },
+    ...(show2d
+      ? [{ value: "2d" as const, label: "2D", title: t("surveys.view_2d"), icon: <MapIcon /> }]
+      : []),
+    ...(show3d
+      ? [{ value: "3d" as const, label: "3D", title: t("surveys.view_3d"), icon: <CubeIcon /> }]
+      : []),
   ];
 
   return (

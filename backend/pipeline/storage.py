@@ -77,6 +77,25 @@ def delete_object(key: str) -> None:
     internal_client().delete_object(Bucket=settings.S3_BUCKET, Key=key)
 
 
+def delete_prefix(prefix: str) -> None:
+    """Recursively remove every object under `prefix` (005 purge job).
+
+    Paginated listing, one `delete_object` per key rather than the batched
+    `DeleteObjects` API: recent botocore defaults to a flexible-checksum
+    header on that operation's request body that MinIO rejects
+    (`MissingContentMD5`), so per-key deletes are what's actually portable
+    across the S3-compatible stores this project targets — a purge job has
+    no latency budget to protect (SC-001/SC-007 only bind the request path).
+    """
+    from django.conf import settings
+
+    client = internal_client()
+    paginator = client.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=settings.S3_BUCKET, Prefix=prefix):
+        for obj in page.get("Contents", []):
+            client.delete_object(Bucket=settings.S3_BUCKET, Key=obj["Key"])
+
+
 def object_size(key: str) -> int:
     from django.conf import settings
 

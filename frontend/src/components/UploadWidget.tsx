@@ -4,14 +4,15 @@
 // including after a browser or machine restart.
 import Uppy from "@uppy/core";
 import Tus from "@uppy/tus";
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { api, ApiError } from "../api/client";
+import { api, ApiError, ProcessingOption } from "../api/client";
 import Alert from "../ui/Alert";
 import Button from "../ui/Button";
 import Field from "../ui/Field";
 import ProgressBar from "../ui/ProgressBar";
+import OptionPicker from "./OptionPicker";
 
 interface Props {
   projectId: string;
@@ -26,6 +27,19 @@ export default function UploadWidget({ projectId, onUploadFinished }: Props) {
   const [percent, setPercent] = useState<number | null>(null);
   const [messageKey, setMessageKey] = useState<string | null>(null);
   const [errorKey, setErrorKey] = useState<string | null>(null);
+  const [catalog, setCatalog] = useState<ProcessingOption[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    void api.getProcessingOptions().then((data) => {
+      setCatalog(data.options);
+      setSelectedOptions(
+        new Set(
+          data.options.filter((option) => option.required || option.default_selected).map((option) => option.id),
+        ),
+      );
+    });
+  }, []);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -41,6 +55,7 @@ export default function UploadWidget({ projectId, onUploadFinished }: Props) {
         size_bytes: file.size,
         capture_date: captureDate,
         name: surveyName || undefined,
+        selected_options: Array.from(selectedOptions),
       });
     } catch (error) {
       setErrorKey(error instanceof ApiError ? error.messageKey : "errors.invalid_request");
@@ -94,6 +109,9 @@ export default function UploadWidget({ projectId, onUploadFinished }: Props) {
       <Field label={t("upload.survey_name")}>
         <input value={surveyName} onChange={(e) => setSurveyName(e.target.value)} maxLength={120} />
       </Field>
+      {catalog.length > 0 && (
+        <OptionPicker options={catalog} selected={selectedOptions} onChange={setSelectedOptions} />
+      )}
       <Button type="submit" disabled={percent !== null}>
         {t("upload.start")}
       </Button>

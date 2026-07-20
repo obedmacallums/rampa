@@ -21,6 +21,8 @@ const API_CODES = [
   "last_owner",
   "not_owner",
   "invalid_role",
+  "not_deletable",
+  "not_restorable",
 ];
 
 describe("error catalogs", () => {

@@ -21,6 +21,11 @@
   "user_not_found": "No existe un usuario con ese nombre. Verifica el nombre exacto.",
   "already_member": "Ese usuario ya es miembro del proyecto.",
   "last_owner": "Un proyecto debe tener siempre al menos un propietario.",
-  "not_owner": "Solo un propietario puede administrar los miembros del proyecto.",
-  "invalid_role": "El rol indicado no es válido."
+  "not_owner": "Debes ser propietario del proyecto para realizar esta acción.",
+  "invalid_role": "El rol indicado no es válido.",
+  "invalid_options": "Una o más opciones de procesamiento seleccionadas no son válidas.",
+  "invalid_input_type": "El tipo de insumo indicado no es válido.",
+  "not_processable": "Ya hay un procesamiento en curso para este levantamiento. Espera a que termine antes de solicitar más productos.",
+  "not_deletable": "No es posible eliminar mientras haya un procesamiento en curso o una subida activa.",
+  "not_restorable": "No es posible restaurar este elemento: no existe, ya fue restaurado o venció su plazo de recuperación."
 }

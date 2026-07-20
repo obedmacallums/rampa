@@ -104,6 +104,9 @@ SUPPORTED_EXTENSIONS = (".las", ".laz")
 UPLOAD_EXPIRY_DAYS = 7
 DEM_RESOLUTION_M = 0.20
 
+# Soft-delete recovery window (005), shared by projects and surveys.
+DELETE_RECOVERY_DAYS = 7
+
 # Celery
 CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 CELERY_TASK_ACKS_LATE = True
@@ -112,7 +115,11 @@ CELERY_BEAT_SCHEDULE = {
     "purge-expired-uploads": {
         "task": "apps.surveys.tasks_maintenance.purge_expired_upload_sessions",
         "schedule": 3600.0,
-    }
+    },
+    "purge-expired-deletions": {
+        "task": "apps.surveys.tasks_maintenance.purge_expired_deletions",
+        "schedule": 3600.0,
+    },
 }
 
 LANGUAGE_CODE = "es"

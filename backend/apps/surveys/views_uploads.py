@@ -9,9 +9,12 @@ from rest_framework.views import APIView
 
 from apps.common.errors import ApiError
 from apps.projects import access
+from pipeline import options as registry
 
 from .models import UploadSession
 from .serializers import UploadSessionSerializer
+
+UPLOAD_INPUT_TYPE = "point_cloud"  # only entry in scope for direct file uploads (FR-013)
 
 
 def _tus_offset(tus_upload_id: str) -> int | None:
@@ -49,6 +52,23 @@ class ProjectUploadsView(APIView):
         except ValueError:
             raise ApiError("invalid_capture_date") from None
 
+        requested_options = request.data.get("selected_options")
+        if requested_options is None:
+            # Omitted entirely -> the registry's default set (clarification
+            # Q4); an explicit empty list means "deselect every optional one".
+            requested_options = [
+                opt.id for opt in registry.options_for(UPLOAD_INPUT_TYPE) if opt.default_selected
+            ]
+        elif not isinstance(requested_options, list) or not all(
+            isinstance(x, str) for x in requested_options
+        ):
+            raise ApiError("invalid_options", detail={"invalid": []})
+
+        try:
+            effective_options = registry.effective_selection(UPLOAD_INPUT_TYPE, requested_options)
+        except registry.InvalidSelectionError as exc:
+            raise ApiError("invalid_options", detail={"invalid": exc.invalid_ids}) from None
+
         session = UploadSession.objects.create(
             project=project,
             declared_filename=filename,
@@ -56,6 +76,7 @@ class ProjectUploadsView(APIView):
             capture_date=capture_date,
             survey_name=(request.data.get("name") or filename)[:120],
             created_by=request.user,
+            selected_options=effective_options,
         )
         return Response(
             {
@@ -65,6 +86,7 @@ class ProjectUploadsView(APIView):
                     "upload_session_id": str(session.id),
                     "filename": filename,
                 },
+                "effective_options": effective_options,
             },
             status=201,
         )

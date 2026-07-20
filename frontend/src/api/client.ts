@@ -18,20 +18,73 @@ export interface ProjectSummary {
   crs: { code: string; label_key: string };
   survey_count: number;
   created_at: string;
+  is_owner: boolean;
+}
+
+export interface DeletedProject {
+  id: string;
+  name: string;
+  crs: { code: string; label_key: string };
+  survey_count: number;
+  deleted_at: string;
+  purge_at: string;
+}
+
+export interface DeletedSurvey {
+  id: string;
+  name: string;
+  capture_date: string;
+  project: { id: string; name: string };
+  deleted_at: string;
+  purge_at: string;
+}
+
+export interface DeletedItems {
+  projects: DeletedProject[];
+  surveys: DeletedSurvey[];
 }
 
 export type SurveyStatus = "queued" | "processing" | "completed" | "failed";
 export type Stage = "validation" | "reprojection" | "surface_generation";
+export type TargetView = "map2d" | "view3d";
+export type OptionState = "pending" | "running" | "completed" | "failed" | "skipped" | "reused";
+
+export interface ProcessingOption {
+  id: string;
+  label_key: string;
+  description_key: string;
+  target_view: TargetView;
+  required: boolean;
+  default_selected: boolean;
+  prerequisites: string[];
+}
+
+export interface ProcessingOptionsCatalog {
+  input_type: string;
+  options: ProcessingOption[];
+}
+
+export interface RunOptionStatus {
+  option_id: string;
+  state: OptionState;
+  failure_code: string | null;
+  failure_message_key: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  reused_from_run_id: string | null;
+}
 
 export interface RunStatus {
   id: string;
   number: number;
   stage: Stage;
   state: "queued" | "running" | "completed" | "failed";
+  input_type: string;
   failure_code: string | null;
   failure_message_key: string | null;
   started_at: string | null;
   finished_at: string | null;
+  options: RunOptionStatus[];
 }
 
 export interface SurveySummary {
@@ -42,6 +95,7 @@ export interface SurveySummary {
   source_size_bytes: number;
   status: SurveyStatus;
   current_stage: Stage | null;
+  input_type: string;
 }
 
 export interface SurveyDetail extends SurveySummary {
@@ -53,6 +107,7 @@ export interface UploadInitiation {
   upload_session_id: string;
   tus_endpoint: string;
   tus_metadata: Record<string, string>;
+  effective_options: string[];
 }
 
 export interface PendingUpload {
@@ -72,23 +127,27 @@ export interface ProjectMember {
   granted_at: string;
 }
 
-export interface ArtifactSet {
+// Keyed by option id (e.g. "elevation", "hillshade", "point_cloud_3d"); shape
+// per artifact varies with its file kind (dem/hillshade/copc), not the option
+// itself (FR-016, contracts/rest-api.md — breaking change over 001's
+// top-level dem/copc/hillshade keys).
+export interface ProductArtifact {
   run_id: string;
-  dem: {
-    url: string;
-    tilejson_url: string;
-    statistics_url: string;
-    sha256: string;
-    size_bytes: number;
-    resolution_m: string;
-  };
-  copc: { url: string; sha256: string; size_bytes: number };
-  hillshade: {
-    tile_url_template: string;
-    tilejson_url: string;
-    cog_url: string;
-    sha256: string;
-  };
+  kind: string;
+  sha256: string;
+  expires_in: number;
+  url?: string;
+  tilejson_url?: string;
+  statistics_url?: string;
+  tile_url_template?: string;
+  cog_url?: string;
+  size_bytes?: number;
+  resolution_m?: string;
+}
+
+export interface ArtifactProducts {
+  input_type: string;
+  products: Record<string, ProductArtifact>;
 }
 
 export class ApiError extends Error {
@@ -143,9 +202,20 @@ export const api = {
       body: JSON.stringify({ name, crs_id: crsId }),
     }),
 
+  getProcessingOptions: (inputType = "point_cloud") =>
+    request<ProcessingOptionsCatalog>(
+      `/processing-options?input_type=${encodeURIComponent(inputType)}`,
+    ),
+
   initiateUpload: (
     projectId: string,
-    body: { filename: string; size_bytes: number; capture_date: string; name?: string },
+    body: {
+      filename: string;
+      size_bytes: number;
+      capture_date: string;
+      name?: string;
+      selected_options?: string[];
+    },
   ) =>
     request<UploadInitiation>(`/projects/${projectId}/uploads`, {
       method: "POST",
@@ -174,5 +244,20 @@ export const api = {
   getSurvey: (surveyId: string) => request<SurveyDetail>(`/surveys/${surveyId}`),
   retrySurvey: (surveyId: string) =>
     request<{ run: RunStatus }>(`/surveys/${surveyId}/retry`, { method: "POST" }),
-  getArtifacts: (surveyId: string) => request<ArtifactSet>(`/surveys/${surveyId}/artifacts`),
+  processSurvey: (surveyId: string, selectedOptions: string[]) =>
+    request<{ run: RunStatus }>(`/surveys/${surveyId}/process`, {
+      method: "POST",
+      body: JSON.stringify({ selected_options: selectedOptions }),
+    }),
+  getArtifacts: (surveyId: string) =>
+    request<ArtifactProducts>(`/surveys/${surveyId}/artifacts`),
+  deleteSurvey: (surveyId: string) => request<object>(`/surveys/${surveyId}`, { method: "DELETE" }),
+  restoreSurvey: (surveyId: string) =>
+    request<SurveySummary>(`/surveys/${surveyId}/restore`, { method: "POST" }),
+
+  deleteProject: (projectId: string) =>
+    request<object>(`/projects/${projectId}`, { method: "DELETE" }),
+  restoreProject: (projectId: string) =>
+    request<ProjectSummary>(`/projects/${projectId}/restore`, { method: "POST" }),
+  listDeleted: () => request<DeletedItems>("/deleted"),
 };

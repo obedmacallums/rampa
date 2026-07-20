@@ -74,6 +74,6 @@ class TusdHookView(APIView):
         session.completed_at = timezone.now()
         session.save(update_fields=["state", "completed_at"])
 
-        enqueue_run(survey)
+        enqueue_run(survey, selection=session.selected_options)
         logger.info("survey %s created from upload session %s", survey.id, session.id)
         return Response({})

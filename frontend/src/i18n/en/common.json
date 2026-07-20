@@ -5,7 +5,7 @@
     "close": "Close",
     "language": "Language"
   },
-  "nav": { "projects": "Projects" },
+  "nav": { "projects": "Projects", "deleted": "Recently deleted" },
   "auth": {
     "username": "Username",
     "password": "Password",
@@ -18,7 +18,9 @@
     "create": "Create project",
     "name": "Project name",
     "crs": "Working coordinate system",
-    "surveys_count": "{{count}} surveys"
+    "surveys_count": "{{count}} surveys",
+    "delete": "Delete project",
+    "delete_confirm": "Delete project \"{{name}}\"? All of its active surveys will be deleted along with it. You can restore it from \"Recently deleted\" within the recovery window."
   },
   "crs": {
     "wgs84_utm_18s": "WGS 84 / UTM zone 18S",
@@ -34,7 +36,11 @@
     "view": "View",
     "view_2d": "2D map",
     "view_3d": "3D view",
-    "retry": "Retry processing"
+    "retry": "Retry processing",
+    "process_more": "Process more options",
+    "process_more_submit": "Start processing",
+    "delete": "Delete",
+    "delete_confirm": "Delete survey \"{{name}}\"? You can restore it from \"Recently deleted\" within the recovery window."
   },
   "status": {
     "queued": "Queued",
@@ -57,7 +63,31 @@
     "done": "Upload complete; processing continues in the background. You may close the browser.",
     "interrupted": "Upload interrupted. Select the same file again to resume where it left off.",
     "pending_title": "Uploads pending resumption",
-    "pending_hint": "Select the same file again under \"Upload survey\" and the transfer will continue from the last confirmed point."
+    "pending_hint": "Select the same file again under \"Upload survey\" and the transfer will continue from the last confirmed point.",
+    "options_heading": "Products to generate",
+    "options_help": "Choose which products to generate from this survey. Required products cannot be unchecked; picking one that depends on another selects it automatically."
+  },
+  "options": {
+    "elevation": {
+      "label": "Elevation",
+      "description": "Terrain elevation surface (DEM); always generated and the basis for every analysis."
+    },
+    "hillshade": {
+      "label": "Hillshade",
+      "description": "Terrain shading derived from the elevation, for easier visual reading of the 2D map."
+    },
+    "point_cloud_3d": {
+      "label": "3D point cloud",
+      "description": "Optimized point cloud for three-dimensional inspection in the 3D viewer."
+    },
+    "state": {
+      "pending": "Pending",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "skipped": "Skipped",
+      "reused": "Reused"
+    }
   },
   "viewer": {
     "loading_3d": "Loading point cloud…",
@@ -85,5 +115,13 @@
     "remove": "Remove",
     "grant_owner": "Make owner",
     "revoke_owner": "Revoke ownership"
+  },
+  "deleted": {
+    "title": "Recently deleted",
+    "empty": "No deleted projects or surveys.",
+    "projects_heading": "Projects",
+    "surveys_heading": "Surveys",
+    "restore": "Restore",
+    "expires_in": "Purges in {{days}} days"
   }
 }

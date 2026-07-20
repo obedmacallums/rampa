@@ -54,8 +54,10 @@ function applySurveyLayer(map: maplibregl.Map, choice: SurveyLayer) {
   if (map.getLayer("dem-color")) {
     map.setLayoutProperty("dem-color", "visibility", choice === "relief" ? "none" : "visible");
   }
-  map.setLayoutProperty("hillshade", "visibility", choice === "elevation" ? "none" : "visible");
-  map.setPaintProperty("hillshade", "raster-opacity", choice === "elevation_relief" ? 0.45 : 1);
+  if (map.getLayer("hillshade")) {
+    map.setLayoutProperty("hillshade", "visibility", choice === "elevation" ? "none" : "visible");
+    map.setPaintProperty("hillshade", "raster-opacity", choice === "elevation_relief" ? 0.45 : 1);
+  }
 }
 
 async function fetchDemTilejson(
@@ -75,17 +77,25 @@ async function fetchDemTilejson(
 }
 
 interface Map2DProps {
-  tilejsonUrl: string;
+  // Absent when the `hillshade` option wasn't selected/resolved (FR-005/FR-016).
+  hillshadeTilejsonUrl?: string;
   demTilejsonUrl: string;
   demStatisticsUrl: string;
 }
 
-export default function Map2D({ tilejsonUrl, demTilejsonUrl, demStatisticsUrl }: Map2DProps) {
+export default function Map2D({
+  hillshadeTilejsonUrl,
+  demTilejsonUrl,
+  demStatisticsUrl,
+}: Map2DProps) {
   const { t } = useTranslation();
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const hillshadeAvailable = Boolean(hillshadeTilejsonUrl);
   const [basemap, setBasemap] = useState<Basemap>("satellite");
-  const [surveyLayer, setSurveyLayer] = useState<SurveyLayer>("elevation_relief");
+  const [surveyLayer, setSurveyLayer] = useState<SurveyLayer>(
+    hillshadeAvailable ? "elevation_relief" : "elevation",
+  );
   const [demAvailable, setDemAvailable] = useState(true);
   const basemapRef = useRef(basemap);
   const surveyLayerRef = useRef(surveyLayer);
@@ -97,14 +107,17 @@ export default function Map2D({ tilejsonUrl, demTilejsonUrl, demStatisticsUrl }:
 
     void (async () => {
       const [tj, demTj] = await Promise.all([
-        fetch(tilejsonUrl).then((r) => r.json()) as Promise<TileJson>,
+        hillshadeTilejsonUrl
+          ? (fetch(hillshadeTilejsonUrl).then((r) => r.json()) as Promise<TileJson>)
+          : Promise.resolve(null),
         fetchDemTilejson(demStatisticsUrl, demTilejsonUrl),
       ]);
       if (cancelled) return;
       if (!demTj) {
-        surveyLayerRef.current = "relief";
+        const fallback = hillshadeAvailable ? "relief" : "elevation";
+        surveyLayerRef.current = fallback;
         setDemAvailable(false);
-        setSurveyLayer("relief");
+        setSurveyLayer(fallback);
       }
       const layer = surveyLayerRef.current;
       const map = new maplibregl.Map({
@@ -148,13 +161,17 @@ export default function Map2D({ tilejsonUrl, demTilejsonUrl, demStatisticsUrl }:
                   },
                 }
               : {}),
-            hillshade: {
-              type: "raster",
-              tiles: tj.tiles,
-              tileSize: 256,
-              ...(tj.bounds ? { bounds: tj.bounds } : {}),
-              ...(tj.maxzoom ? { maxzoom: tj.maxzoom } : {}),
-            },
+            ...(tj
+              ? {
+                  hillshade: {
+                    type: "raster" as const,
+                    tiles: tj.tiles,
+                    tileSize: 256,
+                    ...(tj.bounds ? { bounds: tj.bounds } : {}),
+                    ...(tj.maxzoom ? { maxzoom: tj.maxzoom } : {}),
+                  },
+                }
+              : {}),
           },
           layers: [
             { id: "bg", type: "background", paint: { "background-color": "#e8e8e8" } },
@@ -188,19 +205,28 @@ export default function Map2D({ tilejsonUrl, demTilejsonUrl, demStatisticsUrl }:
                   },
                 ]
               : []),
-            {
-              id: "hillshade",
-              type: "raster",
-              source: "hillshade",
-              layout: { visibility: layer === "elevation" ? "none" : "visible" },
-              paint: { "raster-opacity": layer === "elevation_relief" ? 0.45 : 1 },
-            },
+            ...(tj
+              ? [
+                  {
+                    id: "hillshade",
+                    type: "raster" as const,
+                    source: "hillshade",
+                    layout: {
+                      visibility: (layer === "elevation" ? "none" : "visible") as
+                        | "visible"
+                        | "none",
+                    },
+                    paint: { "raster-opacity": layer === "elevation_relief" ? 0.45 : 1 },
+                  },
+                ]
+              : []),
           ],
         },
       });
       mapRef.current = map;
-      if (tj.bounds) {
-        map.fitBounds(tj.bounds, { padding: 40, animate: false });
+      const bounds = tj?.bounds ?? demTj?.bounds;
+      if (bounds) {
+        map.fitBounds(bounds, { padding: 40, animate: false });
       }
     })();
 
@@ -209,7 +235,7 @@ export default function Map2D({ tilejsonUrl, demTilejsonUrl, demStatisticsUrl }:
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [tilejsonUrl, demTilejsonUrl, demStatisticsUrl]);
+  }, [hillshadeTilejsonUrl, demTilejsonUrl, demStatisticsUrl, hillshadeAvailable]);
 
   useEffect(() => {
     basemapRef.current = basemap;
@@ -232,6 +258,12 @@ export default function Map2D({ tilejsonUrl, demTilejsonUrl, demStatisticsUrl }:
       map.once("styledata", () => applySurveyLayer(map, surveyLayer));
     }
   }, [surveyLayer]);
+
+  const layerChoices = SURVEY_LAYERS.filter((option) => {
+    if (option === "relief") return hillshadeAvailable;
+    if (option === "elevation") return demAvailable;
+    return demAvailable && hillshadeAvailable; // elevation_relief needs both
+  });
 
   return (
     <div className="relative h-full w-full">
@@ -256,22 +288,24 @@ export default function Map2D({ tilejsonUrl, demTilejsonUrl, demStatisticsUrl }:
             </label>
           ))}
         </div>
-        <div role="radiogroup" aria-label={t("viewer.layer_label")} className="grid gap-1">
-          <strong className="text-xs font-semibold text-text-muted">
-            {t("viewer.layer_label")}
-          </strong>
-          {SURVEY_LAYERS.filter((option) => demAvailable || option === "relief").map((option) => (
-            <label key={option} className="flex items-center gap-1.5 text-xs">
-              <input
-                type="radio"
-                name="survey-layer"
-                checked={surveyLayer === option}
-                onChange={() => setSurveyLayer(option)}
-              />
-              {t(`viewer.layer_${option}`)}
-            </label>
-          ))}
-        </div>
+        {layerChoices.length > 1 && (
+          <div role="radiogroup" aria-label={t("viewer.layer_label")} className="grid gap-1">
+            <strong className="text-xs font-semibold text-text-muted">
+              {t("viewer.layer_label")}
+            </strong>
+            {layerChoices.map((option) => (
+              <label key={option} className="flex items-center gap-1.5 text-xs">
+                <input
+                  type="radio"
+                  name="survey-layer"
+                  checked={surveyLayer === option}
+                  onChange={() => setSurveyLayer(option)}
+                />
+                {t(`viewer.layer_${option}`)}
+              </label>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
