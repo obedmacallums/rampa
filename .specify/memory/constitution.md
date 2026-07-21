@@ -1,13 +1,22 @@
 <!--
 Informe de Impacto de Sincronización
-- Cambio de versión: 1.2.0 → 1.3.0 (adición menor)
-- Cambios: nuevo Principio XI (IA como Servicio Aislado, Sujeta a Autoridad Humana);
-  nueva fase V6 en el roadmap con módulos de IA (segmentación de ortofotos con SAM,
-  segmentación semántica de nubes de puntos, IA generativa para reportes/consultas,
-  predicción de degradación de caminos); nueva restricción técnica sobre inferencia
-  de IA como servicio aislado, versionado de modelos y confidencialidad de datos.
-- Principios modificados: ninguno renombrado ni redefinido.
+- Cambio de versión: 1.3.0 → 1.3.1 (parche — aclaración)
+- Cambios: se añade un párrafo de "Alcance" al Principio VIII (Test-First para el Núcleo
+  de Análisis) que delimita su alcance al motor de análisis productor de métricas
+  persistidas y auditables, y lo distingue de las herramientas de inspección puramente
+  visual (regidas por el Principio II, lógica en módulos puros testeados en el lenguaje
+  del cliente). Resuelve la contradicción interna entre el Principio VIII (motor en
+  Python) y el Principio II (interacción de inspección client-side, cero viajes al
+  servidor) que ninguna feature de visualización puede satisfacer literalmente a la vez.
+- Motivación: la feature 006-point-cloud-slice (slice de nube de puntos para inspección
+  visual) extrae perfiles en el cliente; la letra de VIII lo prohibiría aunque II lo exige.
+- Principios modificados: VIII (aclaración de alcance; no renombrado ni redefinido). El
+  párrafo mantiene los dientes del principio: una herramienta de inspección que persista
+  métricas vuelve a caer bajo VIII y exige su motor en Python.
+- Principios afectados indirectamente: I y II (la aclaración es coherente con ambos;
+  ningún cambio de texto en ellos).
 - Historial del documento:
+  - 1.3.1: aclaración de alcance del Principio VIII (herramientas de inspección visual).
   - 1.3.0: adición de IA (Principio XI, fase V6, restricción de inferencia).
   - 1.2.0: adopción inicial en el repositorio (.specify/memory/constitution.md).
   - 1.2.0: se agrega el procesamiento fotogramétrico en plataforma (fotos de dron →
@@ -72,6 +81,8 @@ Todo reporte (de faena completa o filtrado por zona) se genera del lado del serv
 
 El motor de análisis (extracción de perfil, secciones transversales, ajuste de curvatura, detección de bermas/bordes, clasificación de cumplimiento) DEBE desarrollarse como una librería Python independiente del framework, con cobertura pytest contra DEMs sintéticos de verdad conocida (ej. una rampa generada con pendiente exacta de 9% debe clasificar como amarillo bajo el perfil por defecto). Ningún código de análisis se despliega sin tests de verdad conocida. Las capas de UI y API consumen esta librería; nunca reimplementan su lógica.
 
+**Alcance.** Este principio gobierna el motor de análisis que produce métricas persistidas, auditables y consumidas por la evaluación de cumplimiento y los reportes. No alcanza a las herramientas de inspección puramente visual que no persisten valor derivado ni alimentan la evaluación; estas se rigen por el Principio II (interacción del lado del cliente) y aíslan su lógica susceptible de error en módulos puros testeados contra verdad conocida, en el lenguaje del cliente. Una herramienta de inspección que empiece a derivar métricas persistidas cae bajo este principio y exige su motor en Python.
+
 ### IX. Bilingüe por Diseño
 
 La interfaz de usuario, las plantillas de reporte y los documentos generados DEBEN soportar español (primario, con terminología minera chilena: berma, rasante, peralte, calzada, rajo) e inglés (secundario). El código, los identificadores, los mensajes de commit y la documentación interna se escriben en inglés. Ningún texto visible al usuario puede quedar fijo en el código fuera de la capa de i18n.
@@ -117,4 +128,4 @@ Toda capacidad de IA/ML (segmentación de ortofotos con SAM u otro modelo de fun
 
 Esta constitución prevalece sobre prácticas ad-hoc. Las enmiendas requieren: una justificación documentada, un incremento de versión según versionado semántico (MAYOR: principio eliminado o redefinido; MENOR: principio o sección agregada; PARCHE: aclaración), y propagación a las plantillas dependientes. Todas las revisiones de PR y ejecuciones de `/speckit.analyze` DEBEN verificar el cumplimiento de estos principios; las desviaciones DEBEN justificarse explícitamente en la sección de Seguimiento de Complejidad del plan.
 
-**Versión**: 1.3.0 | **Ratificada**: 2026-07-16 | **Última enmienda**: 2026-07-18
+**Versión**: 1.3.1 | **Ratificada**: 2026-07-16 | **Última enmienda**: 2026-07-20
